@@ -1,4 +1,4 @@
-import { getNetworkConfig, TronNetwork } from '@bankofai/sun-kit'
+import { getNetworkConfig, TronNetwork } from '@sun-protocol/sun-kit'
 
 describe('sunswap chains config', () => {
   it('returns mainnet config as default', () => {

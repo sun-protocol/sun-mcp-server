@@ -11,7 +11,7 @@ import { createServer } from 'http'
 import { z } from 'zod'
 import { registerSunswapTools } from './tools'
 import { initWallet, isWalletConfigured, getWallet } from './wallet'
-import { SunKit, SunAPI } from '@bankofai/sun-kit'
+import { SunKit, SunAPI } from '@sun-protocol/sun-kit'
 
 async function startServer() {
   console.error('Starting Dynamic OpenAPI MCP Server...')

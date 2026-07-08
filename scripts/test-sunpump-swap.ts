@@ -10,7 +10,7 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
-import { SunKit, SunPumpTokenState } from '@bankofai/sun-kit'
+import { SunKit, SunPumpTokenState } from '@sun-protocol/sun-kit'
 import { getWalletAddress, initWallet, getWallet, isWalletConfigured } from '../src/wallet'
 
 const TRX_ADDRESS = 'T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb'

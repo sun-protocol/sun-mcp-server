@@ -37,7 +37,7 @@ An MCP server for AI-driven DeFi operations on the TRON network through the SUN.
 
 ## Overview
 
-Connect any AI client to the TRON DeFi ecosystem through a single MCP endpoint. With `@bankofai/sun-mcp-server`, your AI agent can:
+Connect any AI client to the TRON DeFi ecosystem through a single MCP endpoint. With `@sun-protocol/sun-mcp-server`, your AI agent can:
 
 - **Query** — token prices, pool stats, liquidity positions, farming rewards, protocol metrics
 - **Quote** — swap routes and price impact across SUNSwap V2, V3, and V4
@@ -50,54 +50,7 @@ The server supports **stdio** (local) and **Streamable HTTP** (remote) transport
 
 ### Official Hosted MCP (Read-Only)
 
-The fastest way to try SUN MCP Server — no installation, no configuration. BankOfAI hosts a public read-only instance.
-
-**Point your client to the official endpoint:**
-
-```bash
-claude mcp add --transport http sun-mcp-server https://sun-mcp-server.bankofai.io/mcp
-```
-
-This gives you access to all read-only tools: token prices, pool data, positions, quoting, and more. No wallet is configured on the hosted instance, so write operations (swaps, liquidity) are not available.
-
-**curl example** — call the `getPrice` tool via MCP JSON-RPC:
-
-```bash
-curl -X POST https://sun-mcp-server.bankofai.io/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "tools/call",
-    "params": {
-      "name": "getPrice",
-      "arguments": {
-        "tokenAddress": "TKkeiboTkxXKJpbmVFbv4a8ov5rAfRDMf9"
-      }
-    }
-  }'
-```
-
-Response (SSE format):
-
-```
-event: message
-data: {
-  "result": {
-    "content": [
-      {
-        "type": "text",
-        "text": "{\"msg\":\"SUCCESS\",\"code\":0,\"data\":{\"TKkeiboTkxXKJpbmVFbv4a8ov5rAfRDMf9\":{\"quote\":{\"USD\":{\"price\":\"37.513242926312\"}}}},\"status\":{\"error_code\":0}}"
-      }
-    ]
-  },
-  "jsonrpc": "2.0",
-  "id": 1
-}
-```
-
-> No local installation needed. Works with any MCP client that supports Streamable HTTP.
+SUN Protocol hosted MCP endpoint is not published yet. Use the local server flow below until the official Streamable HTTP endpoint is deployed and announced.
 
 ### Local Hosted MCP
 
@@ -106,7 +59,7 @@ Run the server locally with full capabilities — including write operations if 
 **Install:**
 
 ```bash
-npm install -g @bankofai/sun-mcp-server
+npm install -g @sun-protocol/sun-mcp-server
 ```
 
 ### Configuration
@@ -149,7 +102,7 @@ Environment variables passed via `-e` are injected into the server process. Clau
 
 > You can also skip the global install and use `npx`:
 > ```bash
-> claude mcp add sun-mcp-server -- npx -y @bankofai/sun-mcp-server
+> claude mcp add sun-mcp-server -- npx -y @sun-protocol/sun-mcp-server
 > ```
 
 **Streamable HTTP** — run a persistent HTTP server, useful for sharing one endpoint across a team or deploying in Docker / Kubernetes.

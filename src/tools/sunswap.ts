@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { RegisterToolFn } from '../types'
-import type { SunKit, SunAPI } from '@bankofai/sun-kit'
+import type { SunKit, SunAPI } from '@sun-protocol/sun-kit'
 import { getWalletAddress } from '../wallet'
 
 export interface SunswapToolsDeps {

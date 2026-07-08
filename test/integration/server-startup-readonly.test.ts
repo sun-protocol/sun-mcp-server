@@ -21,7 +21,7 @@ describe('server startup in read-only mode', () => {
       }),
     }))
 
-    jest.doMock('@bankofai/sun-kit', () => ({
+    jest.doMock('@sun-protocol/sun-kit', () => ({
       SunKit: sunKitCtor,
       SunAPI: sunApiCtor,
       createReadonlyTronWeb: jest.fn(),

@@ -10,7 +10,7 @@
  */
 
 import 'dotenv/config'
-import { SunKit, SUNSWAP_V2_NILE_ROUTER } from '@bankofai/sun-kit'
+import { SunKit, SUNSWAP_V2_NILE_ROUTER } from '@sun-protocol/sun-kit'
 import { initWallet, getWallet, isWalletConfigured } from '../src/wallet'
 
 const NETWORK = 'nile'

@@ -1,12 +1,12 @@
 /**
  * Unit tests for SunPump (meme token) trading module
  *
- * These tests verify the SunPump functions from @bankofai/sun-kit.
+ * These tests verify the SunPump functions from @sun-protocol/sun-kit.
  * Since the sun-kit functions require a ContractContext, we import the
  * bare functions from sun-kit's internal modules and mock TronWeb.
  */
 
-import { SunKit, SUNPUMP_MAINNET, SUNPUMP_NILE, SunPumpTokenState } from '@bankofai/sun-kit'
+import { SunKit, SUNPUMP_MAINNET, SUNPUMP_NILE, SunPumpTokenState } from '@sun-protocol/sun-kit'
 
 const getSunPumpAddress = SunKit.getSunPumpAddress
 
