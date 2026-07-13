@@ -4,8 +4,8 @@ import {
   SUNSWAP_V4_MAINNET_POOL_MANAGER,
   SUNSWAP_V4_NILE_POOL_MANAGER,
   SunKit,
-} from '@bankofai/sun-kit'
-import { FEE_TICK_SPACING } from '@bankofai/sun-kit/dist/kit/v3-math'
+} from '@sun-protocol/sun-kit'
+import { FEE_TICK_SPACING } from '@sun-protocol/sun-kit/dist/kit/v3-math'
 
 const getCLPositionManagerAddress = SunKit.getCLPositionManagerAddress
 const getPoolManagerAddress = SunKit.getPoolManagerAddress

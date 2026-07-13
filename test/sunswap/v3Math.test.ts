@@ -1,5 +1,5 @@
 /**
- * v3Math tests — imports from @bankofai/sun-kit internal v3-math module.
+ * v3Math tests — imports from @sun-protocol/sun-kit internal v3-math module.
  * Since sun-kit doesn't export v3-math directly, we access via dist.
  */
 import {
@@ -8,7 +8,7 @@ import {
   getAmountsForLiquidity,
   nearestUsableTick,
   FEE_TICK_SPACING,
-} from '@bankofai/sun-kit/dist/kit/v3-math'
+} from '@sun-protocol/sun-kit/dist/kit/v3-math'
 
 describe('v3Math', () => {
   describe('getSqrtRatioAtTick', () => {

@@ -11,51 +11,14 @@ import { createServer } from 'http'
 import { z } from 'zod'
 import { registerSunswapTools } from './tools'
 import { initWallet, isWalletConfigured, getWallet } from './wallet'
-import { SunKit, SunAPI } from '@bankofai/sun-kit'
+import { SunKit, SunAPI } from '@sun-protocol/sun-kit'
 
-async function startServer() {
-  console.error('Starting Dynamic OpenAPI MCP Server...')
-
-  const openapiSpecs: any[] = []
-  let mappedTools: MappedTool[] = []
-  try {
-    for (const [index, specCfg] of config.specConfigs.entries()) {
-      console.error(
-        `Loading spec [${index + 1}/${config.specConfigs.length}] from: ${specCfg.specPath}`,
-      )
-      const openapiSpec = await getProcessedOpenApi(specCfg)
-      openapiSpecs.push(openapiSpec)
-
-      const mapped = mapOpenApiToMcpTools(openapiSpec, {
-        targetApiBaseUrl: specCfg.targetApiBaseUrl,
-        requestTimeoutMs: specCfg.requestTimeoutMs,
-        customHeaders: specCfg.customHeaders,
-        disableXMcp: specCfg.disableXMcp,
-        filter: specCfg.filter,
-        toolPrefix: specCfg.toolPrefix,
-      })
-      mappedTools = mappedTools.concat(mapped)
-    }
-  } catch (error) {
-    console.error(
-      'Failed to initialize/mapping OpenAPI specifications. Server cannot start.',
-      error,
-    )
-    process.exit(1)
-  }
-
-  if (mappedTools.length === 0) {
-    console.error(
-      'No tools were mapped from the configured specs based on current configuration/filtering.',
-    )
-  }
-  if (openapiSpecs.length === 0) {
-    console.error('No OpenAPI specs available after processing. Server cannot start.')
-    process.exit(1)
-  }
-
-  const primarySpec = openapiSpecs[0]
-
+function createMcpServer(
+  primarySpec: any,
+  mappedTools: MappedTool[],
+  deps: { api: SunAPI; kit: SunKit },
+  logRegistrations = true,
+) {
   const server = new McpServer({
     name:
       config.specConfigs.length > 1
@@ -63,10 +26,6 @@ async function startServer() {
         : primarySpec.info?.title || 'OpenAPI to MCP Generator',
     version: primarySpec.info?.version || '1.0.0',
   })
-
-  if (primarySpec.info?.description) {
-    console.error(`API Description: ${primarySpec.info.description}`)
-  }
 
   const registeredToolNames = new Set<string>()
   const registerTool: RegisterToolFn = (name, definition, handler) => {
@@ -87,30 +46,21 @@ async function startServer() {
       } else {
         ;(server.tool as any)(name, paramsSchema, async (toolParams: any) => handler(toolParams))
       }
-      console.error(`Registered Tool: ${name}`)
+      if (logRegistrations) {
+        console.error(`Registered Tool: ${name}`)
+      }
     } catch (registerError) {
       console.error(`Failed to register tool ${name}:`, registerError)
     }
   }
 
-  // Initialize global wallet singleton (agent-wallet > local > read-only)
-  await initWallet()
-
-  // Create SunKit / SunAPI instances
-  const api = new SunAPI()
-  const kit = new SunKit({
-    wallet: isWalletConfigured() ? getWallet() : undefined,
-    network: process.env.TRON_NETWORK || 'mainnet',
-    tronGridApiKey: process.env.TRON_GRID_API_KEY,
-    rpcUrl: process.env.TRON_RPC_URL,
-  })
-
-  // Register custom tools from src/tools
-  registerSunswapTools(registerTool, { api, kit })
+  registerSunswapTools(registerTool, deps)
 
   for (const tool of mappedTools) {
     const { mcpToolDefinition, apiCallDetails } = tool
-    console.error(`Registering MCP tool: ${mcpToolDefinition.name}`)
+    if (logRegistrations) {
+      console.error(`Registering MCP tool: ${mcpToolDefinition.name}`)
+    }
 
     try {
       const params: any = {}
@@ -205,15 +155,72 @@ async function startServer() {
     }
   }
 
+  return server
+}
+
+async function startServer() {
+  console.error('Starting Dynamic OpenAPI MCP Server...')
+
+  const openapiSpecs: any[] = []
+  let mappedTools: MappedTool[] = []
+  try {
+    for (const [index, specCfg] of config.specConfigs.entries()) {
+      console.error(
+        `Loading spec [${index + 1}/${config.specConfigs.length}] from: ${specCfg.specPath}`,
+      )
+      const openapiSpec = await getProcessedOpenApi(specCfg)
+      openapiSpecs.push(openapiSpec)
+
+      const mapped = mapOpenApiToMcpTools(openapiSpec, {
+        targetApiBaseUrl: specCfg.targetApiBaseUrl,
+        requestTimeoutMs: specCfg.requestTimeoutMs,
+        customHeaders: specCfg.customHeaders,
+        disableXMcp: specCfg.disableXMcp,
+        filter: specCfg.filter,
+        toolPrefix: specCfg.toolPrefix,
+      })
+      mappedTools = mappedTools.concat(mapped)
+    }
+  } catch (error) {
+    console.error(
+      'Failed to initialize/mapping OpenAPI specifications. Server cannot start.',
+      error,
+    )
+    process.exit(1)
+  }
+
+  if (mappedTools.length === 0) {
+    console.error(
+      'No tools were mapped from the configured specs based on current configuration/filtering.',
+    )
+  }
+  if (openapiSpecs.length === 0) {
+    console.error('No OpenAPI specs available after processing. Server cannot start.')
+    process.exit(1)
+  }
+
+  const primarySpec = openapiSpecs[0]
+
+  if (primarySpec.info?.description) {
+    console.error(`API Description: ${primarySpec.info.description}`)
+  }
+
+  // Initialize global wallet singleton (agent-wallet > local > read-only)
+  await initWallet()
+
+  // Create SunKit / SunAPI instances
+  const api = new SunAPI()
+  const kit = new SunKit({
+    wallet: isWalletConfigured() ? getWallet() : undefined,
+    network: process.env.TRON_NETWORK || 'mainnet',
+    tronGridApiKey: process.env.TRON_GRID_API_KEY,
+    rpcUrl: process.env.TRON_RPC_URL,
+  })
+
   console.error('Starting MCP server...')
 
   try {
     if (config.transport === 'streamable-http') {
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined,
-      })
-      await server.connect(transport)
-
       const httpServer = createServer(async (req, res) => {
         try {
           const requestUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`)
@@ -222,6 +229,12 @@ async function startServer() {
             res.end(JSON.stringify({ error: 'Not found' }))
             return
           }
+
+          const transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: undefined,
+          })
+          const server = createMcpServer(primarySpec, mappedTools, { api, kit }, false)
+          await server.connect(transport)
           await transport.handleRequest(req, res)
         } catch (requestError: any) {
           console.error('Error handling HTTP MCP request:', requestError)
@@ -242,6 +255,7 @@ async function startServer() {
       return
     }
 
+    const server = createMcpServer(primarySpec, mappedTools, { api, kit })
     const transport = new StdioServerTransport()
     await server.connect(transport)
     console.error(`MCP Server started and ready for connections`)

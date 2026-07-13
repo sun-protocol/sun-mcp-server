@@ -9,7 +9,7 @@
  */
 
 import 'dotenv/config'
-import { SunKit } from '@bankofai/sun-kit'
+import { SunKit } from '@sun-protocol/sun-kit'
 import { initWallet, getWallet, isWalletConfigured } from '../src/wallet'
 
 const NETWORK = 'nile'

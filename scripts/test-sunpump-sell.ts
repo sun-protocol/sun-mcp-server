@@ -12,7 +12,7 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
-import { SunKit } from '@bankofai/sun-kit'
+import { SunKit } from '@sun-protocol/sun-kit'
 import { getWalletAddress, initWallet, getWallet, isWalletConfigured } from '../src/wallet'
 
 const NETWORK = 'nile'

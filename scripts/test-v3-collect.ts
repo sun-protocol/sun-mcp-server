@@ -9,8 +9,8 @@
  */
 
 import 'dotenv/config'
-import { SunKit } from '@bankofai/sun-kit'
-import { SUNSWAP_V3_NILE_POSITION_MANAGER } from '@bankofai/sun-kit'
+import { SunKit } from '@sun-protocol/sun-kit'
+import { SUNSWAP_V3_NILE_POSITION_MANAGER } from '@sun-protocol/sun-kit'
 import { initWallet, getWallet, isWalletConfigured } from '../src/wallet'
 
 const NETWORK = 'nile'

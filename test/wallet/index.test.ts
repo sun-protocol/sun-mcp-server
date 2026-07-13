@@ -29,7 +29,7 @@ jest.mock('@bankofai/agent-wallet', () => ({
   saveConfig: jest.fn(),
 }))
 
-jest.mock('@bankofai/sun-kit', () => ({
+jest.mock('@sun-protocol/sun-kit', () => ({
   createReadonlyTronWeb: jest.fn().mockResolvedValue({}),
   getNetworkConfig: jest.fn(() => ({
     fullNode: 'https://api.trongrid.io',

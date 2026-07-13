@@ -37,7 +37,7 @@ An MCP server for AI-driven DeFi operations on the TRON network through the SUN.
 
 ## Overview
 
-Connect any AI client to the TRON DeFi ecosystem through a single MCP endpoint. With `@bankofai/sun-mcp-server`, your AI agent can:
+Connect any AI client to the TRON DeFi ecosystem through a single MCP endpoint. With `@sun-protocol/sun-mcp-server`, your AI agent can:
 
 - **Query** — token prices, pool stats, liquidity positions, farming rewards, protocol metrics
 - **Quote** — swap routes and price impact across SUNSwap V2, V3, and V4
@@ -99,6 +99,7 @@ data: {
 
 > No local installation needed. Works with any MCP client that supports Streamable HTTP.
 
+
 ### Local Hosted MCP
 
 Run the server locally with full capabilities — including write operations if you configure a wallet.
@@ -106,7 +107,7 @@ Run the server locally with full capabilities — including write operations if 
 **Install:**
 
 ```bash
-npm install -g @bankofai/sun-mcp-server
+npm install -g @sun-protocol/sun-mcp-server
 ```
 
 ### Configuration
@@ -149,7 +150,7 @@ Environment variables passed via `-e` are injected into the server process. Clau
 
 > You can also skip the global install and use `npx`:
 > ```bash
-> claude mcp add sun-mcp-server -- npx -y @bankofai/sun-mcp-server
+> claude mcp add sun-mcp-server -- npx -y @sun-protocol/sun-mcp-server
 > ```
 
 **Streamable HTTP** — run a persistent HTTP server, useful for sharing one endpoint across a team or deploying in Docker / Kubernetes.
