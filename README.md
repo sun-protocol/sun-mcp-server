@@ -50,7 +50,55 @@ The server supports **stdio** (local) and **Streamable HTTP** (remote) transport
 
 ### Official Hosted MCP (Read-Only)
 
-SUN Protocol hosted MCP endpoint is not published yet. Use the local server flow below until the official Streamable HTTP endpoint is deployed and announced.
+The fastest way to try SUN MCP Server — no installation, no configuration. BankOfAI hosts a public read-only instance.
+
+**Point your client to the official endpoint:**
+
+```bash
+claude mcp add --transport http sun-mcp-server https://sun-mcp-server.bankofai.io/mcp
+```
+
+This gives you access to all read-only tools: token prices, pool data, positions, quoting, and more. No wallet is configured on the hosted instance, so write operations (swaps, liquidity) are not available.
+
+**curl example** — call the `getPrice` tool via MCP JSON-RPC:
+
+```bash
+curl -X POST https://sun-mcp-server.bankofai.io/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "getPrice",
+      "arguments": {
+        "tokenAddress": "TKkeiboTkxXKJpbmVFbv4a8ov5rAfRDMf9"
+      }
+    }
+  }'
+```
+
+Response (SSE format):
+
+```
+event: message
+data: {
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"msg\":\"SUCCESS\",\"code\":0,\"data\":{\"TKkeiboTkxXKJpbmVFbv4a8ov5rAfRDMf9\":{\"quote\":{\"USD\":{\"price\":\"37.513242926312\"}}}},\"status\":{\"error_code\":0}}"
+      }
+    ]
+  },
+  "jsonrpc": "2.0",
+  "id": 1
+}
+```
+
+> No local installation needed. Works with any MCP client that supports Streamable HTTP.
+
 
 ### Local Hosted MCP
 
