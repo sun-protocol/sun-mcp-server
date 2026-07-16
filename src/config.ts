@@ -4,6 +4,7 @@ import yargs from 'yargs/yargs'
 import { hideBin } from 'yargs/helpers'
 import fs from 'fs'
 import { isHttpUrl } from './utils/httpClient'
+import { getConfigPaths, getPackageDirectory } from './utils/packagePaths'
 
 dotenv.config()
 
@@ -128,56 +129,33 @@ function loadJsonConfig(configPath: string): Record<string, any> {
   return {}
 }
 
-function getPackageDirectory(): string | null {
-  try {
-    const mainModulePath = require.main?.filename || ''
-    let packageDir = path.dirname(mainModulePath)
-
-    if (packageDir.includes('dist/src')) {
-      packageDir = path.resolve(packageDir, '../..')
-    } else if (packageDir.includes('dist')) {
-      packageDir = path.resolve(packageDir, '..')
-    }
-
-    if (fs.existsSync(path.join(packageDir, 'package.json'))) {
-      return packageDir
-    }
-  } catch (error) {
-    console.error('Error determining package directory:', error)
-  }
-  return null
-}
-
-function getConfigPaths(): string[] {
-  const packageDir = getPackageDirectory()
-  if (packageDir) {
-    const packageConfigPath = path.join(packageDir, 'config.json')
-    console.error(`Checking for package config at: ${packageConfigPath}`)
-    return [packageConfigPath]
-  }
-
-  return [
-    path.resolve(process.cwd(), 'config.json'),
-    path.resolve(process.cwd(), 'openapi-mcp.json'),
-    path.resolve(process.cwd(), '.openapi-mcp.json'),
-  ]
-}
-
 let jsonConfig: Record<string, any> = {}
+let loadedConfigPath: string | null = null
 if (argv.config) {
-  jsonConfig = loadJsonConfig(path.resolve(process.cwd(), argv.config))
+  const configPath = path.resolve(process.cwd(), argv.config)
+  jsonConfig = loadJsonConfig(configPath)
+  loadedConfigPath = Object.keys(jsonConfig).length > 0 ? configPath : null
 } else if (process.env.CONFIG_FILE) {
-  jsonConfig = loadJsonConfig(process.env.CONFIG_FILE)
+  const configPath = path.resolve(process.cwd(), process.env.CONFIG_FILE)
+  jsonConfig = loadJsonConfig(configPath)
+  loadedConfigPath = Object.keys(jsonConfig).length > 0 ? configPath : null
 } else {
+  const packageDirectory = getPackageDirectory()
+  if (packageDirectory) {
+    console.error(`Checking for package config at: ${path.join(packageDirectory, 'config.json')}`)
+  }
   const configPaths = getConfigPaths()
   for (const configPath of configPaths) {
     const cfg = loadJsonConfig(configPath)
     if (Object.keys(cfg).length > 0) {
       jsonConfig = cfg
+      loadedConfigPath = configPath
       break
     }
   }
 }
+
+const configBaseDirectory = loadedConfigPath ? path.dirname(loadedConfigPath) : process.cwd()
 
 const getValueWithPriority = <T>(
   cliValue: T | undefined,
@@ -234,11 +212,12 @@ const parseHeaders = (input: unknown): Record<string, string> => {
   return {}
 }
 
-const resolveSpecPath = (value: string): string => (isHttpUrl(value) ? value : path.resolve(value))
-const resolvePathList = (input: unknown): string[] => {
+const resolveSpecPath = (value: string, baseDirectory: string): string =>
+  isHttpUrl(value) ? value : path.resolve(baseDirectory, value)
+const resolvePathList = (input: unknown, baseDirectory: string): string[] => {
   const raw = parsePatternList(input)
   if (!raw) return []
-  return raw.map((p) => (isHttpUrl(p) ? p : path.resolve(p)))
+  return raw.map((p) => (isHttpUrl(p) ? p : path.resolve(baseDirectory, p)))
 }
 
 const envValues = {
@@ -264,6 +243,12 @@ const envValues = {
 
 const specPath = getValueWithPriority(argv.spec, envValues.specPath, jsonConfig.spec, '')
 const overlays = getValueWithPriority(argv.overlays, envValues.overlays, jsonConfig.overlays, '')
+const specPathBaseDirectory =
+  argv.spec !== undefined || envValues.specPath !== undefined ? process.cwd() : configBaseDirectory
+const overlaysBaseDirectory =
+  argv.overlays !== undefined || envValues.overlays !== undefined
+    ? process.cwd()
+    : configBaseDirectory
 const port = getValueWithPriority(argv.port, envValues.port, jsonConfig.port, 8080)
 const host = getValueWithPriority(argv.host, envValues.host, jsonConfig.host, '127.0.0.1')
 const mcpPathRaw = getValueWithPriority(argv.mcpPath, envValues.mcpPath, jsonConfig.mcpPath, '/')
@@ -374,6 +359,9 @@ const resolvedSpecConfigs: SpecConfig[] = hasMultiSpecsInJson
       )
       .map((specEntry: any): SpecConfig => {
         const perSpecHeaders = parseHeaders(specEntry.headers)
+        const specOverlayInput = specEntry.overlays ?? overlays
+        const specOverlayBaseDirectory =
+          specEntry.overlays !== undefined ? configBaseDirectory : overlaysBaseDirectory
         const perSpecTimeout =
           typeof specEntry.timeout === 'number' ? specEntry.timeout : requestTimeoutMs
         const perSpecDisableXMcp =
@@ -381,8 +369,8 @@ const resolvedSpecConfigs: SpecConfig[] = hasMultiSpecsInJson
 
         return {
           name: typeof specEntry.name === 'string' ? specEntry.name.trim() : undefined,
-          specPath: resolveSpecPath(specEntry.spec.trim()),
-          overlayPaths: resolvePathList(specEntry.overlays ?? overlays),
+          specPath: resolveSpecPath(specEntry.spec.trim(), configBaseDirectory),
+          overlayPaths: resolvePathList(specOverlayInput, specOverlayBaseDirectory),
           targetApiBaseUrl:
             typeof specEntry.targetUrl === 'string' && specEntry.targetUrl.trim()
               ? specEntry.targetUrl.trim()
@@ -399,8 +387,8 @@ const resolvedSpecConfigs: SpecConfig[] = hasMultiSpecsInJson
       })
   : [
       {
-        specPath: resolveSpecPath(specPath),
-        overlayPaths: resolvePathList(overlays),
+        specPath: resolveSpecPath(specPath, specPathBaseDirectory),
+        overlayPaths: resolvePathList(overlays, overlaysBaseDirectory),
         targetApiBaseUrl: targetUrl || undefined,
         requestTimeoutMs,
         customHeaders,

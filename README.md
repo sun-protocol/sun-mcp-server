@@ -162,7 +162,33 @@ sun-mcp-server --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPat
 claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/
 ```
 
+The packaged CLI automatically loads its bundled `config.json` and resolves `./specs/...`
+relative to the installed package, so `OPENAPI_SPEC_PATH` is not required for the default
+SUN.IO deployment. Use `--config` or `OPENAPI_SPEC_PATH` only when overriding the bundled spec.
+
 > For external access (e.g. from other machines or containers), bind to `0.0.0.0` instead of `127.0.0.1`.
+
+**Docker** — the production image listens on `0.0.0.0:8080` and serves MCP at `/`.
+
+```bash
+docker build -t sun-mcp-server:local .
+docker run --rm -p 8080:8080 sun-mcp-server:local
+
+claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/
+```
+
+The image includes the bundled OpenAPI specification and a protocol-level health check.
+Override `MCP_SERVER_PORT`, `MCP_SERVER_PATH`, or other runtime environment variables with
+`docker run -e ...` when required.
+
+Tag pushes publish multi-platform images through GitHub Actions:
+
+- `test-v*` publishes the `test` image tag.
+- `v*` publishes the full Git tag, for example `v1.2.1`.
+
+Configure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as repository secrets. The default
+repository is `sun-protocol/sun-mcp-server`; set the optional `DOCKER_IMAGE` repository variable
+to publish elsewhere.
 
 ### Verify
 

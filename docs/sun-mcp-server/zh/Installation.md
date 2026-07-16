@@ -28,6 +28,29 @@ npm start
 npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
 ```
 
+通过 npm 安装的 `sun-mcp-server` 命令会自动加载包内的 `config.json` 和 OpenAPI
+规范；只有覆盖默认规范时才需要配置 `OPENAPI_SPEC_PATH`。
+
+### Docker
+
+```bash
+docker build -t sun-mcp-server:local .
+docker run --rm -p 8080:8080 sun-mcp-server:local
+```
+
+镜像默认监听 `0.0.0.0:8080`，在根路径 `/` 提供 MCP 服务，并内置 OpenAPI 规范。
+需要覆盖运行参数时，直接传入环境变量：
+
+```bash
+docker run --rm -p 9090:9090 \
+  -e MCP_SERVER_PORT=9090 \
+  -e MCP_SERVER_PATH=/ \
+  sun-mcp-server:local
+```
+
+推送 `test-v*` Git Tag 时发布 Docker `test` 标签；推送 `v*` Tag 时发布完整 Git
+标签。仓库需配置 `DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN` Secrets。
+
 ### 开发模式
 
 ```bash
