@@ -8,10 +8,53 @@ import type { MappedTool, RegisterToolFn } from './types'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { createServer } from 'http'
+import type { IncomingMessage, ServerResponse } from 'http'
 import { z } from 'zod'
 import { registerSunswapTools } from './tools'
 import { initWallet, isWalletConfigured, getWallet } from './wallet'
 import { SunKit, SunAPI } from '@sun-protocol/sun-kit'
+
+const MCP_ALLOWED_HEADERS =
+  'Content-Type, Accept, MCP-Protocol-Version, MCP-Session-Id, Last-Event-ID'
+const MCP_ALLOWED_METHODS = 'POST, OPTIONS'
+
+function applyCorsHeaders(req: IncomingMessage, res: ServerResponse): boolean {
+  const requestOrigin = req.headers.origin
+  const allowAllOrigins = config.mcpCorsOrigins.includes('*')
+  const allowedOrigin = allowAllOrigins
+    ? '*'
+    : requestOrigin && config.mcpCorsOrigins.includes(requestOrigin)
+      ? requestOrigin
+      : undefined
+
+  if (allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
+  }
+  if (!allowAllOrigins && requestOrigin) {
+    res.setHeader('Vary', 'Origin')
+  }
+
+  res.setHeader('Access-Control-Allow-Methods', MCP_ALLOWED_METHODS)
+  res.setHeader('Access-Control-Allow-Headers', MCP_ALLOWED_HEADERS)
+  res.setHeader('Access-Control-Expose-Headers', 'MCP-Session-Id')
+  res.setHeader('Access-Control-Max-Age', '86400')
+
+  return !requestOrigin || allowedOrigin !== undefined
+}
+
+function writeJsonRpcError(res: ServerResponse, statusCode: number, message: string): void {
+  res.writeHead(statusCode, { 'Content-Type': 'application/json' })
+  res.end(
+    JSON.stringify({
+      jsonrpc: '2.0',
+      error: {
+        code: -32000,
+        message,
+      },
+      id: null,
+    }),
+  )
+}
 
 function createMcpServer(
   primarySpec: any,
@@ -230,10 +273,43 @@ async function startServer() {
             return
           }
 
+          if (!applyCorsHeaders(req, res)) {
+            writeJsonRpcError(res, 403, 'Forbidden: Origin is not allowed')
+            return
+          }
+
+          if (req.method === 'OPTIONS') {
+            res.writeHead(204)
+            res.end()
+            return
+          }
+
+          if (req.method !== 'POST') {
+            res.setHeader('Allow', MCP_ALLOWED_METHODS)
+            writeJsonRpcError(res, 405, 'Method not allowed.')
+            return
+          }
+
           const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
+            enableJsonResponse: true,
           })
           const server = createMcpServer(primarySpec, mappedTools, { api, kit }, false)
+
+          transport.onerror = (transportError: Error) => {
+            console.error('MCP transport error:', transportError)
+          }
+
+          let cleanupStarted = false
+          res.once('close', () => {
+            if (cleanupStarted) return
+            cleanupStarted = true
+
+            void server.close().catch((closeError: unknown) => {
+              console.error('Failed to close per-request MCP server:', closeError)
+            })
+          })
+
           await server.connect(transport)
           await transport.handleRequest(req, res)
         } catch (requestError: any) {

@@ -19,7 +19,8 @@
   "transport": "stdio",
   "host": "127.0.0.1",
   "port": 8080,
-  "mcpPath": "/mcp",
+  "mcpPath": "/",
+  "corsOrigins": ["*"],
   "targetUrl": "https://api.example.com",
   "timeout": 30000,
   

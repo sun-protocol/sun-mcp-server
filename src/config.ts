@@ -53,6 +53,11 @@ const argv = yargs(hideBin(process.argv))
     type: 'string',
     description: 'HTTP path for streamable HTTP MCP endpoint',
   })
+  .option('corsOrigins', {
+    type: 'string',
+    description:
+      'Comma-separated allowed origins for streamable HTTP CORS; use * for a public endpoint',
+  })
   .option('transport', {
     type: 'string',
     choices: ['stdio', 'streamable-http'],
@@ -242,6 +247,7 @@ const envValues = {
   port: process.env.MCP_SERVER_PORT ? parseInt(process.env.MCP_SERVER_PORT, 10) : undefined,
   host: process.env.MCP_SERVER_HOST,
   mcpPath: process.env.MCP_SERVER_PATH,
+  corsOrigins: process.env.MCP_CORS_ORIGINS,
   transport: process.env.MCP_TRANSPORT as TransportMode | undefined,
   targetUrl: process.env.TARGET_API_BASE_URL,
   timeout: process.env.TARGET_API_TIMEOUT_MS
@@ -260,7 +266,14 @@ const specPath = getValueWithPriority(argv.spec, envValues.specPath, jsonConfig.
 const overlays = getValueWithPriority(argv.overlays, envValues.overlays, jsonConfig.overlays, '')
 const port = getValueWithPriority(argv.port, envValues.port, jsonConfig.port, 8080)
 const host = getValueWithPriority(argv.host, envValues.host, jsonConfig.host, '127.0.0.1')
-const mcpPathRaw = getValueWithPriority(argv.mcpPath, envValues.mcpPath, jsonConfig.mcpPath, '/mcp')
+const mcpPathRaw = getValueWithPriority(argv.mcpPath, envValues.mcpPath, jsonConfig.mcpPath, '/')
+const corsOriginsRaw = getValueWithPriority(
+  argv.corsOrigins,
+  envValues.corsOrigins,
+  jsonConfig.corsOrigins,
+  '*',
+)
+const mcpCorsOrigins = parsePatternList(corsOriginsRaw) ?? ['*']
 const transport = getValueWithPriority(
   argv.transport as TransportMode | undefined,
   envValues.transport,
@@ -413,6 +426,7 @@ export const config = {
   mcpPort: port,
   mcpHost: host,
   mcpPath: mcpPathRaw.startsWith('/') ? mcpPathRaw : `/${mcpPathRaw}`,
+  mcpCorsOrigins,
   transport,
   targetApiBaseUrl: resolvedSpecConfigs[0].targetApiBaseUrl || '',
   requestTimeoutMs: resolvedSpecConfigs[0].requestTimeoutMs,
@@ -458,6 +472,7 @@ console.error(`- MCP Server Port: ${config.mcpPort}`)
 console.error(`- MCP Transport: ${config.transport}`)
 if (config.transport === 'streamable-http') {
   console.error(`- MCP HTTP Endpoint: http://${config.mcpHost}:${config.mcpPort}${config.mcpPath}`)
+  console.error(`- MCP CORS Origins: ${config.mcpCorsOrigins.join(', ') || '(disabled)'}`)
 }
 if (config.targetApiBaseUrl) {
   console.error(`- Target API Base URL: ${config.targetApiBaseUrl}`)

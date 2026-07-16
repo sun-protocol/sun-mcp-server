@@ -105,6 +105,7 @@ describe('server startup in read-only mode', () => {
     })
     const registerSunswapTools = jest.fn()
     const connect = jest.fn(async () => undefined)
+    const close = jest.fn(async () => undefined)
     const tool = jest.fn()
     const handleRequest = jest.fn(async (_req: any, res: any) => {
       res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -143,6 +144,7 @@ describe('server startup in read-only mode', () => {
     const McpServer = jest.fn().mockImplementation(function McpServerMock(this: any) {
       this.tool = tool
       this.connect = connect
+      this.close = close
     })
     jest.doMock('@modelcontextprotocol/sdk/server/mcp.js', () => ({
       McpServer,
@@ -156,6 +158,7 @@ describe('server startup in read-only mode', () => {
       .fn()
       .mockImplementation(function StreamableHTTPServerTransportMock(this: any) {
         this.handleRequest = handleRequest
+        this.onerror = undefined
       })
     jest.doMock('@modelcontextprotocol/sdk/server/streamableHttp.js', () => ({
       StreamableHTTPServerTransport,
@@ -166,7 +169,8 @@ describe('server startup in read-only mode', () => {
         transport: 'streamable-http',
         mcpHost: '127.0.0.1',
         mcpPort: 18080,
-        mcpPath: '/mcp',
+        mcpPath: '/',
+        mcpCorsOrigins: ['*'],
         specConfigs: [
           {
             specPath: '/tmp/test-spec.json',
@@ -201,20 +205,70 @@ describe('server startup in read-only mode', () => {
     await expect(startServer()).resolves.toBeUndefined()
     expect(requestHandler).toBeDefined()
 
-    const createResponse = () => ({
-      headersSent: false,
-      writeHead: jest.fn(function (this: any) {
-        this.headersSent = true
-      }),
-      end: jest.fn(),
-    })
+    const createResponse = () => {
+      const listeners: Record<string, () => void> = {}
+      const response: any = {
+        headersSent: false,
+        writableEnded: false,
+        setHeader: jest.fn(),
+        once: jest.fn((event: string, listener: () => void) => {
+          listeners[event] = listener
+          return response
+        }),
+        writeHead: jest.fn(function (this: any) {
+          this.headersSent = true
+          return this
+        }),
+        end: jest.fn(function (this: any) {
+          this.writableEnded = true
+          listeners.close?.()
+          return this
+        }),
+      }
+      return response
+    }
 
-    await requestHandler!({ url: '/mcp', headers: { host: '127.0.0.1:18080' } }, createResponse())
-    await requestHandler!({ url: '/mcp', headers: { host: '127.0.0.1:18080' } }, createResponse())
+    const optionsResponse = createResponse()
+    await requestHandler!(
+      {
+        method: 'OPTIONS',
+        url: '/',
+        headers: { host: '127.0.0.1:18080', origin: 'https://example.com' },
+      },
+      optionsResponse,
+    )
+
+    expect(optionsResponse.writeHead).toHaveBeenCalledWith(204)
+    expect(optionsResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*')
+
+    const getResponse = createResponse()
+    await requestHandler!(
+      { method: 'GET', url: '/', headers: { host: '127.0.0.1:18080' } },
+      getResponse,
+    )
+
+    expect(getResponse.writeHead).toHaveBeenCalledWith(405, {
+      'Content-Type': 'application/json',
+    })
+    expect(getResponse.setHeader).toHaveBeenCalledWith('Allow', 'POST, OPTIONS')
+
+    await requestHandler!(
+      { method: 'POST', url: '/', headers: { host: '127.0.0.1:18080' } },
+      createResponse(),
+    )
+    await requestHandler!(
+      { method: 'POST', url: '/', headers: { host: '127.0.0.1:18080' } },
+      createResponse(),
+    )
 
     expect(McpServer).toHaveBeenCalledTimes(2)
     expect(StreamableHTTPServerTransport).toHaveBeenCalledTimes(2)
+    expect(StreamableHTTPServerTransport).toHaveBeenNthCalledWith(1, {
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true,
+    })
     expect(connect).toHaveBeenCalledTimes(2)
     expect(handleRequest).toHaveBeenCalledTimes(2)
+    expect(close).toHaveBeenCalledTimes(2)
   })
 })

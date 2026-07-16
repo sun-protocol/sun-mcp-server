@@ -50,12 +50,12 @@ The server supports **stdio** (local) and **Streamable HTTP** (remote) transport
 
 ### Official Hosted MCP (Read-Only)
 
-The fastest way to try SUN MCP Server — no installation, no configuration. BankOfAI hosts a public read-only instance.
+The fastest way to try SUN MCP Server — no installation, no configuration. SUN.IO hosts a public read-only instance.
 
 **Point your client to the official endpoint:**
 
 ```bash
-claude mcp add --transport http sun-mcp-server https://sun-mcp-server.bankofai.io/mcp
+claude mcp add --transport http sun-mcp-server https://mcp.sun.io/
 ```
 
 This gives you access to all read-only tools: token prices, pool data, positions, quoting, and more. No wallet is configured on the hosted instance, so write operations (swaps, liquidity) are not available.
@@ -63,7 +63,7 @@ This gives you access to all read-only tools: token prices, pool data, positions
 **curl example** — call the `getPrice` tool via MCP JSON-RPC:
 
 ```bash
-curl -X POST https://sun-mcp-server.bankofai.io/mcp \
+curl -X POST https://mcp.sun.io/ \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{
@@ -79,11 +79,10 @@ curl -X POST https://sun-mcp-server.bankofai.io/mcp \
   }'
 ```
 
-Response (SSE format):
+Response (JSON format):
 
-```
-event: message
-data: {
+```json
+{
   "result": {
     "content": [
       {
@@ -157,10 +156,10 @@ Environment variables passed via `-e` are injected into the server process. Clau
 
 ```bash
 # Start the server
-sun-mcp-server --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /mcp
+sun-mcp-server --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
 
 # Register it with your MCP client
-claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/mcp
+claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/
 ```
 
 > For external access (e.g. from other machines or containers), bind to `0.0.0.0` instead of `127.0.0.1`.
@@ -229,7 +228,7 @@ Add to your MCP configuration file (`~/Library/Application Support/Claude/claude
 {
   "mcpServers": {
     "sun-mcp-server": {
-      "url": "http://127.0.0.1:8080/mcp"
+      "url": "http://127.0.0.1:8080/"
     }
   }
 }
@@ -261,7 +260,7 @@ Add to `.cursor/mcp.json` in your project root:
 {
   "mcpServers": {
     "sun-mcp-server": {
-      "url": "http://127.0.0.1:8080/mcp"
+      "url": "http://127.0.0.1:8080/"
     }
   }
 }

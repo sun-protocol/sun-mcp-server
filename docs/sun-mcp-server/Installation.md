@@ -25,7 +25,7 @@ npm start
 ### HTTP Mode
 
 ```bash
-npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /mcp
+npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
 ```
 
 ### Development Mode
