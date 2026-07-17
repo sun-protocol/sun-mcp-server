@@ -17,7 +17,7 @@
 | `MCP_SERVER_HOST` | HTTP 服务器地址 | `127.0.0.1` |
 | `MCP_SERVER_PORT` | HTTP 服务器端口 | `8080` |
 | `MCP_SERVER_PATH` | HTTP MCP 端点路径 | `/` |
-| `MCP_CORS_ORIGINS` | 浏览器允许来源，逗号分隔；公共端点使用 `*` | `*` |
+| `MCP_CORS_ORIGINS` | 浏览器允许来源，逗号分隔；留空表示拒绝浏览器跨域访问 | （禁用） |
 | `MCP_WHITELIST_OPERATIONS` | 允许的操作（逗号分隔） | （全部） |
 | `MCP_BLACKLIST_OPERATIONS` | 屏蔽的操作（逗号分隔） | （无） |
 | `CUSTOM_HEADERS` | 自定义请求头（JSON 格式） | |

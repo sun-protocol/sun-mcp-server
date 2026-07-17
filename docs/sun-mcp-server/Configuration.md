@@ -17,7 +17,7 @@ Default sample configuration in `config.json`:
 | `MCP_SERVER_HOST` | HTTP server host | `127.0.0.1` |
 | `MCP_SERVER_PORT` | HTTP server port | `8080` |
 | `MCP_SERVER_PATH` | HTTP MCP endpoint path | `/` |
-| `MCP_CORS_ORIGINS` | Comma-separated allowed browser origins; use `*` for a public endpoint | `*` |
+| `MCP_CORS_ORIGINS` | Comma-separated allowed browser origins; leave empty to deny browser origins | (disabled) |
 | `MCP_WHITELIST_OPERATIONS` | Comma-separated list of allowed operations | (all) |
 | `MCP_BLACKLIST_OPERATIONS` | Comma-separated list of blocked operations | (none) |
 | `CUSTOM_HEADERS` | Custom headers as JSON | |

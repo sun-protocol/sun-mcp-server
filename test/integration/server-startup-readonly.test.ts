@@ -170,7 +170,7 @@ describe('server startup in read-only mode', () => {
         mcpHost: '127.0.0.1',
         mcpPort: 18080,
         mcpPath: '/',
-        mcpCorsOrigins: ['*'],
+        mcpCorsOrigins: [],
         specConfigs: [
           {
             specPath: '/tmp/test-spec.json',
@@ -238,8 +238,13 @@ describe('server startup in read-only mode', () => {
       optionsResponse,
     )
 
-    expect(optionsResponse.writeHead).toHaveBeenCalledWith(204)
-    expect(optionsResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*')
+    expect(optionsResponse.writeHead).toHaveBeenCalledWith(403, {
+      'Content-Type': 'application/json',
+    })
+    expect(optionsResponse.setHeader).not.toHaveBeenCalledWith(
+      'Access-Control-Allow-Origin',
+      expect.anything(),
+    )
 
     const getResponse = createResponse()
     await requestHandler!(

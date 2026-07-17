@@ -20,7 +20,7 @@
   "host": "127.0.0.1",
   "port": 8080,
   "mcpPath": "/",
-  "corsOrigins": ["*"],
+  "corsOrigins": [],
   "targetUrl": "https://api.example.com",
   "timeout": 30000,
   

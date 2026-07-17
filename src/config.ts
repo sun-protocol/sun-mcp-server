@@ -57,7 +57,7 @@ const argv = yargs(hideBin(process.argv))
   .option('corsOrigins', {
     type: 'string',
     description:
-      'Comma-separated allowed origins for streamable HTTP CORS; use * for a public endpoint',
+      'Comma-separated allowed origins for streamable HTTP CORS; leave empty to deny browser origins',
   })
   .option('transport', {
     type: 'string',
@@ -256,9 +256,9 @@ const corsOriginsRaw = getValueWithPriority(
   argv.corsOrigins,
   envValues.corsOrigins,
   jsonConfig.corsOrigins,
-  '*',
+  '',
 )
-const mcpCorsOrigins = parsePatternList(corsOriginsRaw) ?? ['*']
+const mcpCorsOrigins = parsePatternList(corsOriginsRaw) ?? []
 const transport = getValueWithPriority(
   argv.transport as TransportMode | undefined,
   envValues.transport,
