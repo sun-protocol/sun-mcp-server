@@ -52,7 +52,8 @@ const argv = yargs(hideBin(process.argv))
   })
   .option('mcpPath', {
     type: 'string',
-    description: 'HTTP path for streamable HTTP MCP endpoint',
+    description:
+      'HTTP path for streamable HTTP MCP endpoint; / and /mcp are served as compatible aliases',
   })
   .option('corsOrigins', {
     type: 'string',

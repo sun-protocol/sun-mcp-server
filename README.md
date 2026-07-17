@@ -165,10 +165,11 @@ claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/
 The packaged CLI automatically loads its bundled `config.json` and resolves `./specs/...`
 relative to the installed package, so `OPENAPI_SPEC_PATH` is not required for the default
 SUN.IO deployment. Use `--config` or `OPENAPI_SPEC_PATH` only when overriding the bundled spec.
+When the configured MCP path is `/` or `/mcp`, both URLs are accepted.
 
 > For external access (e.g. from other machines or containers), bind to `0.0.0.0` instead of `127.0.0.1`.
 
-**Docker** — the production image listens on `0.0.0.0:8080` and serves MCP at `/`.
+**Docker** — the production image listens on `0.0.0.0:8080` and serves MCP at both `/` and `/mcp`.
 
 ```bash
 docker build -t sun-mcp-server:local .

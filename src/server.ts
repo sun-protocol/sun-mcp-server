@@ -18,6 +18,14 @@ const MCP_ALLOWED_HEADERS =
   'Content-Type, Accept, MCP-Protocol-Version, MCP-Session-Id, Last-Event-ID'
 const MCP_ALLOWED_METHODS = 'POST, OPTIONS'
 
+function getCompatibleMcpPaths(configuredPath: string): ReadonlySet<string> {
+  if (configuredPath === '/' || configuredPath === '/mcp') {
+    return new Set(['/', '/mcp'])
+  }
+
+  return new Set([configuredPath])
+}
+
 function applyCorsHeaders(req: IncomingMessage, res: ServerResponse): boolean {
   const requestOrigin = req.headers.origin
   const allowAllOrigins = config.mcpCorsOrigins.includes('*')
@@ -264,10 +272,11 @@ async function startServer() {
 
   try {
     if (config.transport === 'streamable-http') {
+      const compatibleMcpPaths = getCompatibleMcpPaths(config.mcpPath)
       const httpServer = createServer(async (req, res) => {
         try {
           const requestUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`)
-          if (requestUrl.pathname !== config.mcpPath) {
+          if (!compatibleMcpPaths.has(requestUrl.pathname)) {
             res.writeHead(404, { 'Content-Type': 'application/json' })
             res.end(JSON.stringify({ error: 'Not found' }))
             return
@@ -327,7 +336,11 @@ async function startServer() {
       })
 
       console.error(`MCP Server started and ready for connections`)
-      console.error(`Listening on http://${config.mcpHost}:${config.mcpPort}${config.mcpPath}`)
+      console.error(
+        `Listening on ${Array.from(compatibleMcpPaths)
+          .map((mcpPath) => `http://${config.mcpHost}:${config.mcpPort}${mcpPath}`)
+          .join(', ')}`,
+      )
       return
     }
 

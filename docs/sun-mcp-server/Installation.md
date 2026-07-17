@@ -31,6 +31,8 @@ npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath 
 The packaged `sun-mcp-server` command automatically loads the bundled `config.json` and
 OpenAPI spec. `OPENAPI_SPEC_PATH` is only required when overriding the bundled spec.
 
+When `MCP_SERVER_PATH` is `/` or `/mcp`, both paths are accepted for MCP client compatibility.
+
 ### Docker
 
 ```bash

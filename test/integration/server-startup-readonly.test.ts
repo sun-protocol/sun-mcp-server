@@ -265,15 +265,28 @@ describe('server startup in read-only mode', () => {
       { method: 'POST', url: '/', headers: { host: '127.0.0.1:18080' } },
       createResponse(),
     )
+    await requestHandler!(
+      { method: 'POST', url: '/mcp', headers: { host: '127.0.0.1:18080' } },
+      createResponse(),
+    )
 
-    expect(McpServer).toHaveBeenCalledTimes(2)
-    expect(StreamableHTTPServerTransport).toHaveBeenCalledTimes(2)
+    const notFoundResponse = createResponse()
+    await requestHandler!(
+      { method: 'POST', url: '/other', headers: { host: '127.0.0.1:18080' } },
+      notFoundResponse,
+    )
+
+    expect(notFoundResponse.writeHead).toHaveBeenCalledWith(404, {
+      'Content-Type': 'application/json',
+    })
+    expect(McpServer).toHaveBeenCalledTimes(3)
+    expect(StreamableHTTPServerTransport).toHaveBeenCalledTimes(3)
     expect(StreamableHTTPServerTransport).toHaveBeenNthCalledWith(1, {
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
     })
-    expect(connect).toHaveBeenCalledTimes(2)
-    expect(handleRequest).toHaveBeenCalledTimes(2)
-    expect(close).toHaveBeenCalledTimes(2)
+    expect(connect).toHaveBeenCalledTimes(3)
+    expect(handleRequest).toHaveBeenCalledTimes(3)
+    expect(close).toHaveBeenCalledTimes(3)
   })
 })
