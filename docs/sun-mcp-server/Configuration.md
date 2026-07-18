@@ -7,6 +7,18 @@ Default sample configuration in `config.json`:
 - Spec: `./specs/sunio-open-api.json`
 - Target URL: `https://open.sun.io`
 
+### Configuration File Precedence
+
+1. `--config <path>`
+2. `CONFIG_FILE=<path>`
+3. `./openapi-mcp.json`
+4. `./.openapi-mcp.json`
+5. `./config.json`
+6. The bundled `config.json` fallback
+
+Relative OpenAPI specification and overlay paths are resolved from the directory containing
+the selected configuration file.
+
 ### Environment Variables
 
 | Variable | Description | Default |

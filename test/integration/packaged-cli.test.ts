@@ -9,15 +9,30 @@ const projectRoot = path.resolve(__dirname, '../..')
 describe('packaged CLI', () => {
   it('loads the bundled config and OpenAPI spec outside the package directory', () => {
     const packageDirectory = getPackageDirectory()
-    const configPaths = getConfigPaths(path.join(os.tmpdir(), 'outside-sun-mcp'), packageDirectory)
+    const workingDirectory = path.join(os.tmpdir(), 'outside-sun-mcp')
+    const configPaths = getConfigPaths(workingDirectory, packageDirectory)
 
     expect(packageDirectory).toBe(projectRoot)
-    expect(configPaths[0]).toBe(path.join(projectRoot, 'config.json'))
+    expect(configPaths).toEqual([
+      path.join(workingDirectory, 'openapi-mcp.json'),
+      path.join(workingDirectory, '.openapi-mcp.json'),
+      path.join(workingDirectory, 'config.json'),
+      path.join(projectRoot, 'config.json'),
+    ])
 
-    const bundledConfig = JSON.parse(fs.readFileSync(configPaths[0], 'utf8'))
-    expect(path.resolve(path.dirname(configPaths[0]), bundledConfig.specs[0].spec)).toBe(
+    const bundledConfigPath = configPaths.at(-1)!
+    const bundledConfig = JSON.parse(fs.readFileSync(bundledConfigPath, 'utf8'))
+    expect(path.resolve(path.dirname(bundledConfigPath), bundledConfig.specs[0].spec)).toBe(
       path.join(projectRoot, 'specs/sunio-open-api.json'),
     )
+  })
+
+  it('de-duplicates the bundled config when running from the package directory', () => {
+    expect(getConfigPaths(projectRoot, projectRoot)).toEqual([
+      path.join(projectRoot, 'openapi-mcp.json'),
+      path.join(projectRoot, '.openapi-mcp.json'),
+      path.join(projectRoot, 'config.json'),
+    ])
   })
 
   it('invokes startServer from the executable bin', () => {

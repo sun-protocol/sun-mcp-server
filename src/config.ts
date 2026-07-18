@@ -143,7 +143,7 @@ if (argv.config) {
 } else {
   const packageDirectory = getPackageDirectory()
   if (packageDirectory) {
-    console.error(`Checking for package config at: ${path.join(packageDirectory, 'config.json')}`)
+    console.error(`Bundled config fallback: ${path.join(packageDirectory, 'config.json')}`)
   }
   const configPaths = getConfigPaths()
   for (const configPath of configPaths) {

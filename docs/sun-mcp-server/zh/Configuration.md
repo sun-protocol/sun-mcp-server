@@ -7,6 +7,17 @@
 - Spec: `./specs/sunio-open-api.json`
 - 目标 URL: `https://open.sun.io`
 
+### 配置文件优先级
+
+1. `--config <path>`
+2. `CONFIG_FILE=<path>`
+3. 当前工作目录下的 `openapi-mcp.json`
+4. 当前工作目录下的 `.openapi-mcp.json`
+5. 当前工作目录下的 `config.json`
+6. 包内置 `config.json` 兜底配置
+
+OpenAPI 规范和 overlay 的相对路径以最终选中的配置文件所在目录为基准解析。
+
 ### 环境变量
 
 | 变量 | 说明 | 默认值 |

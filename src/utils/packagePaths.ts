@@ -37,17 +37,15 @@ export function getConfigPaths(
   workingDirectory = process.cwd(),
   packageDirectory = getPackageDirectory(),
 ): string[] {
-  const configPaths: string[] = []
+  const configPaths = [
+    path.resolve(workingDirectory, 'openapi-mcp.json'),
+    path.resolve(workingDirectory, '.openapi-mcp.json'),
+    path.resolve(workingDirectory, 'config.json'),
+  ]
 
   if (packageDirectory) {
     configPaths.push(path.join(packageDirectory, 'config.json'))
   }
-
-  configPaths.push(
-    path.resolve(workingDirectory, 'openapi-mcp.json'),
-    path.resolve(workingDirectory, '.openapi-mcp.json'),
-    path.resolve(workingDirectory, 'config.json'),
-  )
 
   return [...new Set(configPaths)]
 }
