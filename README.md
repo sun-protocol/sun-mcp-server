@@ -351,7 +351,7 @@ The server dynamically generates read-only tools from the bundled SUN.IO OpenAPI
 | | `getPoolHooks` | `GET /apiv2/pools/hooks` | Pool hooks list |
 | | `getPoolVolHistory` | `GET /apiv2/pools/history/vol` | Pool volume history |
 | | `getPoolLiqHistory` | `GET /apiv2/pools/history/liq` | Pool liquidity history |
-| Pairs | `getPairsFromEntity` | `GET /apiv2/pairs` | Token pair entity query |
+| Pairs | `getPairs` | `GET /apiv2/pairs` | Token pair entity query |
 | Farms | `getFarms` | `GET /apiv2/farms` | Farming pool list |
 | | `getFarmTransactions` | `GET /apiv2/farms/transactions` | Farm transaction scanning |
 | | `getFarmPositions` | `GET /apiv2/farms/positions/user` | User farming positions |
@@ -442,7 +442,7 @@ The higher-level SUNSwap tools automatically compute or fill in parameters so th
 
 - If tick range is omitted, defaults to ±50 × tickSpacing around the current price
 - Supports single-sided input — provide only `amount0` or `amount1`
-- Slippage tolerance defaults to 95%
+- Minimum amounts default to desired amounts × 95%, which is a 5% slippage tolerance
 
 **V4 Mint (`sunswap_v4_mint_position`):**
 

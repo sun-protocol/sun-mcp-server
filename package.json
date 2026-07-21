@@ -28,6 +28,8 @@
     "dev": "nodemon --watch src --ext ts --exec ts-node src/cli.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "docs:tools": "node scripts/generate-tool-catalog.cjs",
+    "docs:check": "node scripts/generate-tool-catalog.cjs --check",
     "test": "jest",
     "test:integration": "jest --testMatch='**/test/integration/**/*.test.ts'",
     "test:package": "npm run build && node scripts/verify-package.cjs",

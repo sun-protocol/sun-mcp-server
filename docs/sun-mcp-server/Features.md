@@ -65,18 +65,15 @@ All V3 tools feature intelligent auto-compute:
 - `sunswap_read_contract` — read view/pure functions
 - `sunswap_send_contract` — send state-changing transactions
 
-## V3 Math Engine
+## V3 Math and Pool State
 
-The server includes a built-in V3 math engine (`src/sunswap/v3Math.ts`) ported from Uniswap V3 Solidity:
+V3 math and live pool-state resolution are implemented by `@sun-protocol/sun-kit`; this server
+only exposes the MCP adapter in `src/tools/sunswap.ts`. The SDK provides:
 
 - `getSqrtRatioAtTick` — TickMath.getSqrtRatioAtTick
 - `maxLiquidityForAmounts` — compute max liquidity from token amounts
 - `getAmountsForLiquidity` — compute token amounts from liquidity
 - `nearestUsableTick` — snap tick to valid tickSpacing boundary
-
-## V3 Pool Reader
-
-`src/sunswap/v3Pool.ts` reads live pool state from the V3 factory:
 
 - Resolves pool address from token pair + fee via factory.getPool
 - Reads slot0 (sqrtPriceX96, currentTick), liquidity, and tickSpacing

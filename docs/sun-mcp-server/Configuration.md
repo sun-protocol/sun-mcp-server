@@ -61,7 +61,9 @@ The runtime settings below are still supported by this server:
 
 ## SUNSWAP Contract Addresses
 
-The server ships with default contract addresses in `src/sunswap/constants.ts`:
+Runtime network configuration and default addresses are owned by `@sun-protocol/sun-kit` and
+consumed through `SunKit` in `src/tools/sunswap.ts`. The installed SDK version is the source of
+truth; the tables below are deployment reference values, not a second runtime configuration source.
 
 ### V2
 

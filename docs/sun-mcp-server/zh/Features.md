@@ -65,18 +65,15 @@
 - `sunswap_read_contract` — 读取合约 view/pure 函数
 - `sunswap_send_contract` — 发送状态变更交易
 
-## V3 数学引擎
+## V3 数学与池子状态
 
-服务器内置了从 Uniswap V3 Solidity 移植的 V3 数学引擎（`src/sunswap/v3Math.ts`）：
+V3 数学和实时池子状态解析由 `@sun-protocol/sun-kit` 实现；本服务只在
+`src/tools/sunswap.ts` 提供 MCP 适配层。SDK 提供：
 
 - `getSqrtRatioAtTick` — TickMath.getSqrtRatioAtTick
 - `maxLiquidityForAmounts` — 从代币数量计算最大流动性
 - `getAmountsForLiquidity` — 从流动性计算代币数量
 - `nearestUsableTick` — 将 tick 对齐到有效的 tickSpacing 边界
-
-## V3 池子读取器
-
-`src/sunswap/v3Pool.ts` 从 V3 工厂合约读取实时池子状态：
 
 - 通过 factory.getPool 从代币对 + fee 解析池子地址
 - 读取 slot0（sqrtPriceX96、currentTick）、liquidity 和 tickSpacing

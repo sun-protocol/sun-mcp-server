@@ -59,7 +59,9 @@ Cookie credential，也不会返回 `Access-Control-Allow-Credentials`；浏览�
 
 ## SUNSWAP 合约地址
 
-服务器内置了默认合约地址，位于 `src/sunswap/constants.ts`：
+运行时网络配置和默认地址由 `@sun-protocol/sun-kit` 维护，并通过
+`src/tools/sunswap.ts` 中的 `SunKit` 调用。实际安装的 SDK 版本是唯一事实源；下表仅作部署核对，
+不是第二套运行时配置。
 
 ### V2
 
