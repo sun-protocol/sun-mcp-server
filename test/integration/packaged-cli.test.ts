@@ -22,6 +22,7 @@ describe('packaged CLI', () => {
 
     const bundledConfigPath = configPaths.at(-1)!
     const bundledConfig = JSON.parse(fs.readFileSync(bundledConfigPath, 'utf8'))
+    expect(bundledConfig.transport).toBe('stdio')
     expect(path.resolve(path.dirname(bundledConfigPath), bundledConfig.specs[0].spec)).toBe(
       path.join(projectRoot, 'specs/sunio-open-api.json'),
     )

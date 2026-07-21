@@ -30,7 +30,8 @@ npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath 
 
 通过 npm 安装的 `sun-mcp-server` 命令会依次检查当前工作目录下的
 `openapi-mcp.json`、`.openapi-mcp.json` 和 `config.json`，均不存在时再使用包内置
-`config.json` 和 OpenAPI 规范；只有覆盖规范时才需要配置 `OPENAPI_SPEC_PATH`。
+`config.json` 和 OpenAPI 规范。包内兜底配置使用 `stdio`，Docker 镜像则显式选择
+`streamable-http`；只有覆盖规范时才需要配置 `OPENAPI_SPEC_PATH`。
 
 当 `MCP_SERVER_PATH` 配置为 `/` 或 `/mcp` 时，服务会同时接受这两个路径以兼容不同 MCP 客户端。
 
