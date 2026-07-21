@@ -13,6 +13,7 @@ describe('server startup in read-only mode', () => {
     })
     const registerSunswapTools = jest.fn()
     const connect = jest.fn(async () => undefined)
+    const close = jest.fn(async () => undefined)
     const tool = jest.fn()
 
     jest.doMock('@bankofai/agent-wallet', () => ({
@@ -31,6 +32,7 @@ describe('server startup in read-only mode', () => {
       McpServer: jest.fn().mockImplementation(function McpServerMock(this: any) {
         this.tool = tool
         this.connect = connect
+        this.close = close
       }),
     }))
 
@@ -80,7 +82,7 @@ describe('server startup in read-only mode', () => {
 
     const { startServer } = await import('../../src/server')
 
-    await expect(startServer()).resolves.toBeUndefined()
+    const runningServer = await startServer()
     expect(sunKitCtor).toHaveBeenCalledWith(
       expect.objectContaining({
         wallet: undefined,
@@ -94,6 +96,8 @@ describe('server startup in read-only mode', () => {
         kit: expect.anything(),
       }),
     )
+    await runningServer.close()
+    expect(close).toHaveBeenCalledTimes(1)
   })
 
   it('creates a fresh MCP server per stateless streamable HTTP request', async () => {
@@ -107,7 +111,17 @@ describe('server startup in read-only mode', () => {
     const connect = jest.fn(async () => undefined)
     const close = jest.fn(async () => undefined)
     const tool = jest.fn()
-    const handleRequest = jest.fn(async (_req: any, res: any) => {
+    let releaseReadRequest!: () => void
+    let releaseWriteRequest!: () => void
+    const readRequestGate = new Promise<void>((resolve) => {
+      releaseReadRequest = resolve
+    })
+    const writeRequestGate = new Promise<void>((resolve) => {
+      releaseWriteRequest = resolve
+    })
+    const handleRequest = jest.fn(async (req: any, res: any) => {
+      if (req.headers['x-request-kind'] === 'read') await readRequestGate
+      if (req.headers['x-request-kind'] === 'write') await writeRequestGate
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ ok: true }))
     })
@@ -119,6 +133,12 @@ describe('server startup in read-only mode', () => {
         callback()
         return httpServer
       }),
+      close: jest.fn((callback: (error?: Error) => void) => {
+        callback()
+        return httpServer
+      }),
+      closeIdleConnections: jest.fn(),
+      closeAllConnections: jest.fn(),
     }
     const createServer = jest.fn((handler) => {
       requestHandler = handler
@@ -202,7 +222,7 @@ describe('server startup in read-only mode', () => {
 
     const { startServer } = await import('../../src/server')
 
-    await expect(startServer()).resolves.toBeUndefined()
+    const runningServer = await startServer()
     expect(requestHandler).toBeDefined()
 
     const createResponse = () => {
@@ -288,5 +308,51 @@ describe('server startup in read-only mode', () => {
     expect(connect).toHaveBeenCalledTimes(3)
     expect(handleRequest).toHaveBeenCalledTimes(3)
     expect(close).toHaveBeenCalledTimes(3)
+
+    const readResponse = createResponse()
+    const writeResponse = createResponse()
+    const readRequest = requestHandler!(
+      {
+        method: 'POST',
+        url: '/',
+        headers: { host: '127.0.0.1:18080', 'x-request-kind': 'read' },
+      },
+      readResponse,
+    )
+    const writeRequest = requestHandler!(
+      {
+        method: 'POST',
+        url: '/',
+        headers: { host: '127.0.0.1:18080', 'x-request-kind': 'write' },
+      },
+      writeResponse,
+    )
+
+    await Promise.resolve()
+    expect(runningServer.getInFlightRequestCount()).toBe(2)
+
+    const shutdown = runningServer.close()
+    await Promise.resolve()
+    expect(httpServer.close).toHaveBeenCalledTimes(1)
+    expect(httpServer.closeIdleConnections).toHaveBeenCalledTimes(1)
+
+    const rejectedResponse = createResponse()
+    await requestHandler!(
+      { method: 'POST', url: '/', headers: { host: '127.0.0.1:18080' } },
+      rejectedResponse,
+    )
+    expect(rejectedResponse.writeHead).toHaveBeenCalledWith(503, {
+      'Content-Type': 'application/json',
+    })
+
+    releaseReadRequest()
+    await readRequest
+    expect(runningServer.getInFlightRequestCount()).toBe(1)
+    releaseWriteRequest()
+
+    await Promise.all([writeRequest, shutdown])
+    expect(runningServer.getInFlightRequestCount()).toBe(0)
+    expect(handleRequest).toHaveBeenCalledTimes(5)
+    expect(close).toHaveBeenCalledTimes(5)
   })
 })

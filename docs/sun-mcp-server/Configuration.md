@@ -30,6 +30,7 @@ the selected configuration file.
 | `MCP_SERVER_PORT` | HTTP server port | `8080` |
 | `MCP_SERVER_PATH` | Primary HTTP MCP endpoint path; `/` and `/mcp` are compatible aliases | `/` |
 | `MCP_CORS_ORIGINS` | Comma-separated allowed browser origins; leave empty to deny browser origins | (disabled) |
+| `MCP_SHUTDOWN_TIMEOUT_MS` | Graceful shutdown deadline before forced exit | `5000` |
 | `MCP_WHITELIST_OPERATIONS` | Comma-separated list of allowed operations | (all) |
 | `MCP_BLACKLIST_OPERATIONS` | Comma-separated list of blocked operations | (none) |
 | `CUSTOM_HEADERS` | Custom headers as JSON | |

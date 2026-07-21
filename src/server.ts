@@ -8,7 +8,7 @@ import type { MappedTool, RegisterToolFn } from './types'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { createServer } from 'http'
-import type { IncomingMessage, ServerResponse } from 'http'
+import type { IncomingMessage, Server, ServerResponse } from 'http'
 import { z } from 'zod'
 import { registerSunswapTools } from './tools'
 import { initWallet, isWalletConfigured, getWallet } from './wallet'
@@ -17,6 +17,13 @@ import { SunKit, SunAPI } from '@sun-protocol/sun-kit'
 const MCP_ALLOWED_HEADERS =
   'Content-Type, Accept, MCP-Protocol-Version, MCP-Session-Id, Last-Event-ID'
 const MCP_ALLOWED_METHODS = 'POST, OPTIONS'
+const DEFAULT_SHUTDOWN_TIMEOUT_MS = 5000
+
+export interface RunningServer {
+  close(): Promise<void>
+  forceClose(): Promise<void>
+  getInFlightRequestCount(): number
+}
 
 function getCompatibleMcpPaths(configuredPath: string): ReadonlySet<string> {
   if (configuredPath === '/' || configuredPath === '/mcp') {
@@ -62,6 +69,21 @@ function writeJsonRpcError(res: ServerResponse, statusCode: number, message: str
       id: null,
     }),
   )
+}
+
+function closeHttpServer(httpServer: Server): Promise<void> {
+  return new Promise((resolve, reject) => {
+    httpServer.close((error) => {
+      if (error) reject(error)
+      else resolve()
+    })
+    httpServer.closeIdleConnections?.()
+  })
+}
+
+function getShutdownTimeoutMs(): number {
+  const parsed = Number(process.env.MCP_SHUTDOWN_TIMEOUT_MS || DEFAULT_SHUTDOWN_TIMEOUT_MS)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_SHUTDOWN_TIMEOUT_MS
 }
 
 function createMcpServer(
@@ -209,7 +231,7 @@ function createMcpServer(
   return server
 }
 
-async function startServer() {
+async function startServer(): Promise<RunningServer> {
   console.error('Starting Dynamic OpenAPI MCP Server...')
 
   const openapiSpecs: any[] = []
@@ -233,11 +255,8 @@ async function startServer() {
       mappedTools = mappedTools.concat(mapped)
     }
   } catch (error) {
-    console.error(
-      'Failed to initialize/mapping OpenAPI specifications. Server cannot start.',
-      error,
-    )
-    process.exit(1)
+    console.error('Failed to initialize/mapping OpenAPI specifications. Server cannot start.')
+    throw error
   }
 
   if (mappedTools.length === 0) {
@@ -247,7 +266,7 @@ async function startServer() {
   }
   if (openapiSpecs.length === 0) {
     console.error('No OpenAPI specs available after processing. Server cannot start.')
-    process.exit(1)
+    throw new Error('No OpenAPI specs available after processing')
   }
 
   const primarySpec = openapiSpecs[0]
@@ -273,7 +292,11 @@ async function startServer() {
   try {
     if (config.transport === 'streamable-http') {
       const compatibleMcpPaths = getCompatibleMcpPaths(config.mcpPath)
-      const httpServer = createServer(async (req, res) => {
+      const inFlightRequests = new Set<Promise<void>>()
+      let shuttingDown = false
+      let closePromise: Promise<void> | undefined
+
+      const handleHttpRequest = async (req: IncomingMessage, res: ServerResponse) => {
         try {
           const requestUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`)
           if (!compatibleMcpPaths.has(requestUrl.pathname)) {
@@ -306,28 +329,40 @@ async function startServer() {
           const server = createMcpServer(primarySpec, mappedTools, { api, kit }, false)
 
           transport.onerror = (transportError: Error) => {
-            console.error('MCP transport error:', transportError)
+            console.error('MCP transport error:', transportError.name)
           }
 
-          let cleanupStarted = false
-          res.once('close', () => {
-            if (cleanupStarted) return
-            cleanupStarted = true
-
-            void server.close().catch((closeError: unknown) => {
-              console.error('Failed to close per-request MCP server:', closeError)
+          try {
+            await server.connect(transport)
+            await transport.handleRequest(req, res)
+          } finally {
+            await server.close().catch(() => {
+              console.error('Failed to close per-request MCP server')
             })
-          })
-
-          await server.connect(transport)
-          await transport.handleRequest(req, res)
-        } catch (requestError: any) {
-          console.error('Error handling HTTP MCP request:', requestError)
+          }
+        } catch {
+          console.error('Error handling HTTP MCP request')
           if (!res.headersSent) {
             res.writeHead(500, { 'Content-Type': 'application/json' })
           }
-          res.end(JSON.stringify({ error: 'Internal server error' }))
+          if (!res.writableEnded) {
+            res.end(JSON.stringify({ error: 'Internal server error' }))
+          }
         }
+      }
+
+      const httpServer = createServer(async (req, res) => {
+        if (shuttingDown) {
+          res.setHeader('Connection', 'close')
+          writeJsonRpcError(res, 503, 'Server is shutting down')
+          return
+        }
+
+        const requestPromise = handleHttpRequest(req, res).finally(() => {
+          inFlightRequests.delete(requestPromise)
+        })
+        inFlightRequests.add(requestPromise)
+        await requestPromise
       })
 
       await new Promise<void>((resolve, reject) => {
@@ -341,24 +376,99 @@ async function startServer() {
           .map((mcpPath) => `http://${config.mcpHost}:${config.mcpPort}${mcpPath}`)
           .join(', ')}`,
       )
-      return
+      return {
+        close(): Promise<void> {
+          if (closePromise) return closePromise
+
+          shuttingDown = true
+          closePromise = (async () => {
+            const activeRequests = Array.from(inFlightRequests)
+            console.error(`Draining ${activeRequests.length} in-flight MCP request(s)`)
+            const stopListening = closeHttpServer(httpServer)
+            await Promise.allSettled(activeRequests)
+            await stopListening
+            console.error('MCP HTTP server shutdown complete')
+          })()
+          return closePromise
+        },
+        async forceClose(): Promise<void> {
+          shuttingDown = true
+          httpServer.closeAllConnections?.()
+          console.error('Forced MCP HTTP connection shutdown')
+        },
+        getInFlightRequestCount(): number {
+          return inFlightRequests.size
+        },
+      }
     }
 
     const server = createMcpServer(primarySpec, mappedTools, { api, kit })
     const transport = new StdioServerTransport()
     await server.connect(transport)
     console.error(`MCP Server started and ready for connections`)
+    let closePromise: Promise<void> | undefined
+    return {
+      close(): Promise<void> {
+        closePromise ??= server.close()
+        return closePromise
+      },
+      async forceClose(): Promise<void> {
+        await server.close().catch(() => undefined)
+      },
+      getInFlightRequestCount(): number {
+        return 0
+      },
+    }
   } catch (error) {
-    console.error('Error starting MCP server:', error)
-    process.exit(1)
+    console.error('Error starting MCP server')
+    throw error
   }
 }
 
-export { startServer }
+async function runCli(): Promise<void> {
+  const runningServer = await startServer()
+  let shutdownStarted = false
+
+  const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
+    if (shutdownStarted) {
+      console.error(`Received ${signal} during shutdown; forcing exit`)
+      await runningServer.forceClose()
+      process.exit(1)
+    }
+    shutdownStarted = true
+
+    const timeoutMs = getShutdownTimeoutMs()
+    console.error(
+      `Received ${signal}; starting graceful shutdown with ${runningServer.getInFlightRequestCount()} in-flight request(s)`,
+    )
+
+    let timeout: NodeJS.Timeout | undefined
+    const outcome = await Promise.race([
+      runningServer.close().then(() => 'closed' as const),
+      new Promise<'timeout'>((resolve) => {
+        timeout = setTimeout(() => resolve('timeout'), timeoutMs)
+      }),
+    ])
+
+    if (timeout) clearTimeout(timeout)
+    if (outcome === 'timeout') {
+      console.error(`Graceful shutdown exceeded ${timeoutMs}ms; forcing exit`)
+      await runningServer.forceClose()
+      process.exit(1)
+    }
+
+    process.exit(0)
+  }
+
+  process.once('SIGTERM', () => void shutdown('SIGTERM'))
+  process.once('SIGINT', () => void shutdown('SIGINT'))
+}
+
+export { runCli, startServer }
 
 if (require.main === module) {
-  startServer().catch((error) => {
-    console.error('Unhandled error during server startup:', error)
+  runCli().catch(() => {
+    console.error('Unhandled error during server startup')
     process.exit(1)
   })
 }

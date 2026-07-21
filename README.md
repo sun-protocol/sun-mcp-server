@@ -182,7 +182,9 @@ claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/
 
 The image includes the bundled OpenAPI specification and a protocol-level health check.
 Override `MCP_SERVER_PORT`, `MCP_SERVER_PATH`, or other runtime environment variables with
-`docker run -e ...` when required.
+`docker run -e ...` when required. On `SIGTERM`/`SIGINT`, the server stops accepting new
+requests and drains all in-flight read and write tool calls before exiting. Set
+`MCP_SHUTDOWN_TIMEOUT_MS` to control the force-exit deadline (default: `5000`).
 
 Tag pushes publish multi-platform images through GitHub Actions:
 

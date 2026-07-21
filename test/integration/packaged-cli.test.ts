@@ -49,7 +49,7 @@ describe('packaged CLI', () => {
     )
     fs.writeFileSync(
       path.join(distDirectory, 'server.js'),
-      "exports.startServer = async () => { process.stdout.write('started'); };\n",
+      "exports.runCli = async () => { process.stdout.write('started'); };\n",
     )
 
     try {

@@ -29,6 +29,7 @@ OpenAPI 规范和 overlay 的相对路径以最终选中的配置文件所在目
 | `MCP_SERVER_PORT` | HTTP 服务器端口 | `8080` |
 | `MCP_SERVER_PATH` | HTTP MCP 主路径；`/` 与 `/mcp` 互为兼容别名 | `/` |
 | `MCP_CORS_ORIGINS` | 浏览器允许来源，逗号分隔；留空表示拒绝浏览器跨域访问 | （禁用） |
+| `MCP_SHUTDOWN_TIMEOUT_MS` | 强制退出前的优雅关闭期限（毫秒） | `5000` |
 | `MCP_WHITELIST_OPERATIONS` | 允许的操作（逗号分隔） | （全部） |
 | `MCP_BLACKLIST_OPERATIONS` | 屏蔽的操作（逗号分隔） | （无） |
 | `CUSTOM_HEADERS` | 自定义请求头（JSON 格式） | |
