@@ -35,6 +35,10 @@ OpenAPI 规范和 overlay 的相对路径以最终选中的配置文件所在目
 | `CUSTOM_HEADERS` | 自定义请求头（JSON 格式） | |
 | `TARGET_API_TIMEOUT_MS` | API 请求超时（毫秒） | |
 
+浏览器预检允许 MCP 协议请求头及 `Authorization`，未知请求头会被拒绝。服务不支持
+Cookie credential，也不会返回 `Access-Control-Allow-Credentials`；浏览器认证部署应使用
+精确 Origin 白名单。
+
 ## TRON 钱包配置
 
 写操作（兑换、流动性管理）需要 TRON 钱包。

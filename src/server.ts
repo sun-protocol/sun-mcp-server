@@ -16,8 +16,11 @@ import { SunKit, SunAPI } from '@sun-protocol/sun-kit'
 import { getCompatibleMcpPaths } from './utils/mcpPath'
 
 const MCP_ALLOWED_HEADERS =
-  'Content-Type, Accept, MCP-Protocol-Version, MCP-Session-Id, Last-Event-ID'
+  'Content-Type, Accept, Authorization, MCP-Protocol-Version, MCP-Session-Id, Last-Event-ID'
 const MCP_ALLOWED_METHODS = 'POST, OPTIONS'
+const MCP_ALLOWED_HEADER_NAMES = new Set(
+  MCP_ALLOWED_HEADERS.split(',').map((header) => header.trim().toLowerCase()),
+)
 const DEFAULT_SHUTDOWN_TIMEOUT_MS = 5000
 
 export interface RunningServer {
@@ -48,6 +51,24 @@ function applyCorsHeaders(req: IncomingMessage, res: ServerResponse): boolean {
   res.setHeader('Access-Control-Max-Age', '86400')
 
   return !requestOrigin || allowedOrigin !== undefined
+}
+
+function getHeaderValue(header: string | string[] | undefined): string {
+  return Array.isArray(header) ? header.join(',') : header || ''
+}
+
+function validateCorsPreflight(req: IncomingMessage): string | null {
+  const requestedMethod = getHeaderValue(req.headers['access-control-request-method'])
+  if (requestedMethod && requestedMethod.toUpperCase() !== 'POST') {
+    return 'Forbidden: requested CORS method is not allowed'
+  }
+
+  const requestedHeaders = getHeaderValue(req.headers['access-control-request-headers'])
+    .split(',')
+    .map((header) => header.trim().toLowerCase())
+    .filter(Boolean)
+  const unknownHeader = requestedHeaders.find((header) => !MCP_ALLOWED_HEADER_NAMES.has(header))
+  return unknownHeader ? 'Forbidden: requested CORS header is not allowed' : null
 }
 
 function writeJsonRpcError(res: ServerResponse, statusCode: number, message: string): void {
@@ -304,6 +325,11 @@ async function startServer(): Promise<RunningServer> {
           }
 
           if (req.method === 'OPTIONS') {
+            const preflightError = validateCorsPreflight(req)
+            if (preflightError) {
+              writeJsonRpcError(res, 403, preflightError)
+              return
+            }
             res.writeHead(204)
             res.end()
             return

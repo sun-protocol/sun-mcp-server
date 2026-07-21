@@ -144,6 +144,24 @@ describe('server startup in read-only mode', () => {
       requestHandler = handler
       return httpServer
     })
+    const serverConfig = {
+      transport: 'streamable-http',
+      mcpHost: '127.0.0.1',
+      mcpPort: 18080,
+      mcpPath: '/',
+      mcpCorsOrigins: ['https://allowed.example'],
+      specConfigs: [
+        {
+          specPath: '/tmp/test-spec.json',
+          overlayPaths: [],
+          targetApiBaseUrl: 'https://example.com',
+          requestTimeoutMs: 30000,
+          customHeaders: {},
+          disableXMcp: false,
+          filter: { whitelist: null, blacklist: [] },
+        },
+      ],
+    }
 
     jest.doMock('http', () => ({
       createServer,
@@ -185,24 +203,7 @@ describe('server startup in read-only mode', () => {
     }))
 
     jest.doMock('../../src/config', () => ({
-      config: {
-        transport: 'streamable-http',
-        mcpHost: '127.0.0.1',
-        mcpPort: 18080,
-        mcpPath: '/',
-        mcpCorsOrigins: [],
-        specConfigs: [
-          {
-            specPath: '/tmp/test-spec.json',
-            overlayPaths: [],
-            targetApiBaseUrl: 'https://example.com',
-            requestTimeoutMs: 30000,
-            customHeaders: {},
-            disableXMcp: false,
-            filter: { whitelist: null, blacklist: [] },
-          },
-        ],
-      },
+      config: serverConfig,
     }))
 
     jest.doMock('../../src/openapiProcessor', () => ({
@@ -253,7 +254,7 @@ describe('server startup in read-only mode', () => {
       {
         method: 'OPTIONS',
         url: '/',
-        headers: { host: '127.0.0.1:18080', origin: 'https://example.com' },
+        headers: { host: '127.0.0.1:18080', origin: 'https://unknown.example' },
       },
       optionsResponse,
     )
@@ -265,6 +266,48 @@ describe('server startup in read-only mode', () => {
       'Access-Control-Allow-Origin',
       expect.anything(),
     )
+
+    const authorizationPreflightResponse = createResponse()
+    await requestHandler!(
+      {
+        method: 'OPTIONS',
+        url: '/',
+        headers: {
+          host: '127.0.0.1:18080',
+          origin: 'https://allowed.example',
+          'access-control-request-method': 'POST',
+          'access-control-request-headers': 'Content-Type, Authorization',
+        },
+      },
+      authorizationPreflightResponse,
+    )
+    expect(authorizationPreflightResponse.writeHead).toHaveBeenCalledWith(204)
+    expect(authorizationPreflightResponse.setHeader).toHaveBeenCalledWith(
+      'Access-Control-Allow-Origin',
+      'https://allowed.example',
+    )
+    expect(authorizationPreflightResponse.setHeader).toHaveBeenCalledWith(
+      'Access-Control-Allow-Headers',
+      expect.stringContaining('Authorization'),
+    )
+
+    const unknownHeaderResponse = createResponse()
+    await requestHandler!(
+      {
+        method: 'OPTIONS',
+        url: '/',
+        headers: {
+          host: '127.0.0.1:18080',
+          origin: 'https://allowed.example',
+          'access-control-request-method': 'POST',
+          'access-control-request-headers': 'X-Unknown-Header',
+        },
+      },
+      unknownHeaderResponse,
+    )
+    expect(unknownHeaderResponse.writeHead).toHaveBeenCalledWith(403, {
+      'Content-Type': 'application/json',
+    })
 
     const getResponse = createResponse()
     await requestHandler!(
@@ -278,7 +321,15 @@ describe('server startup in read-only mode', () => {
     expect(getResponse.setHeader).toHaveBeenCalledWith('Allow', 'POST, OPTIONS')
 
     await requestHandler!(
-      { method: 'POST', url: '/', headers: { host: '127.0.0.1:18080' } },
+      {
+        method: 'POST',
+        url: '/',
+        headers: {
+          host: '127.0.0.1:18080',
+          origin: 'https://allowed.example',
+          authorization: 'Bearer test-token',
+        },
+      },
       createResponse(),
     )
     await requestHandler!(
@@ -308,6 +359,49 @@ describe('server startup in read-only mode', () => {
     expect(connect).toHaveBeenCalledTimes(3)
     expect(handleRequest).toHaveBeenCalledTimes(3)
     expect(close).toHaveBeenCalledTimes(3)
+
+    serverConfig.mcpCorsOrigins = ['*']
+    const wildcardAuthorizationResponse = createResponse()
+    await requestHandler!(
+      {
+        method: 'OPTIONS',
+        url: '/',
+        headers: {
+          host: '127.0.0.1:18080',
+          origin: 'https://browser.example',
+          'access-control-request-method': 'POST',
+          'access-control-request-headers': 'Authorization',
+        },
+      },
+      wildcardAuthorizationResponse,
+    )
+    expect(wildcardAuthorizationResponse.writeHead).toHaveBeenCalledWith(204)
+    expect(wildcardAuthorizationResponse.setHeader).toHaveBeenCalledWith(
+      'Access-Control-Allow-Origin',
+      '*',
+    )
+    expect(wildcardAuthorizationResponse.setHeader).not.toHaveBeenCalledWith(
+      'Access-Control-Allow-Credentials',
+      expect.anything(),
+    )
+
+    const cookieCredentialResponse = createResponse()
+    await requestHandler!(
+      {
+        method: 'OPTIONS',
+        url: '/',
+        headers: {
+          host: '127.0.0.1:18080',
+          origin: 'https://browser.example',
+          'access-control-request-method': 'POST',
+          'access-control-request-headers': 'Cookie',
+        },
+      },
+      cookieCredentialResponse,
+    )
+    expect(cookieCredentialResponse.writeHead).toHaveBeenCalledWith(403, {
+      'Content-Type': 'application/json',
+    })
 
     const readResponse = createResponse()
     const writeResponse = createResponse()

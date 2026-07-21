@@ -36,6 +36,11 @@ the selected configuration file.
 | `CUSTOM_HEADERS` | Custom headers as JSON | |
 | `TARGET_API_TIMEOUT_MS` | API request timeout in ms | |
 
+Browser preflight accepts the MCP protocol headers plus `Authorization`. Unknown requested
+headers are rejected. Cookie credentials are not supported, and the server never emits
+`Access-Control-Allow-Credentials`; use an exact origin allowlist for authenticated browser
+deployments.
+
 ## TRON Wallet Configuration
 
 Write operations (swaps, liquidity management) require a TRON wallet.
