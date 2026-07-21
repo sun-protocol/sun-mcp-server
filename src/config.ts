@@ -6,6 +6,7 @@ import fs from 'fs'
 import { isHttpUrl } from './utils/httpClient'
 import { getConfigPaths, getPackageDirectory } from './utils/packagePaths'
 import { safeUrlForLogging } from './utils/logging'
+import { getValueWithPriority, parseOptionalBooleanEnv } from './utils/configValues'
 
 dotenv.config()
 
@@ -159,18 +160,6 @@ if (argv.config) {
 
 const configBaseDirectory = loadedConfigPath ? path.dirname(loadedConfigPath) : process.cwd()
 
-const getValueWithPriority = <T>(
-  cliValue: T | undefined,
-  envValue: T | undefined,
-  configValue: T | undefined,
-  defaultValue: T,
-): T => {
-  if (cliValue !== undefined) return cliValue
-  if (envValue !== undefined) return envValue
-  if (configValue !== undefined) return configValue
-  return defaultValue
-}
-
 const parsePatternList = (value: unknown): string[] | null => {
   if (value === null || value === undefined) return null
   if (typeof value === 'string') {
@@ -240,7 +229,7 @@ const envValues = {
   securitySchemeName: process.env.SECURITY_SCHEME_NAME,
   securityCredentials: process.env.SECURITY_CREDENTIALS,
   headers: process.env.CUSTOM_HEADERS,
-  disableXMcp: process.env.DISABLE_X_MCP === 'true',
+  disableXMcp: parseOptionalBooleanEnv(process.env.DISABLE_X_MCP, 'DISABLE_X_MCP'),
 }
 
 const specPath = getValueWithPriority(argv.spec, envValues.specPath, jsonConfig.spec, '')
@@ -341,14 +330,12 @@ if (argv.headers) {
   customHeaders = { ...customHeaders, ...parseHeaders(jsonConfig.headers) }
 }
 
-const disableXMcp =
-  argv.disableXMcp !== undefined
-    ? argv.disableXMcp
-    : envValues.disableXMcp !== undefined
-      ? envValues.disableXMcp
-      : jsonConfig.disableXMcp !== undefined
-        ? jsonConfig.disableXMcp
-        : false
+const disableXMcp = getValueWithPriority(
+  argv.disableXMcp,
+  envValues.disableXMcp,
+  typeof jsonConfig.disableXMcp === 'boolean' ? jsonConfig.disableXMcp : undefined,
+  false,
+)
 
 const globalWhitelistPatterns = parsePatternList(whitelist)
 const globalBlacklistPatterns = parsePatternList(blacklist) || []
