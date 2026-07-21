@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
 import path from 'path'
-import yargs from 'yargs/yargs'
+import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import fs from 'fs'
 import { isHttpUrl } from './utils/httpClient'

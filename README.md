@@ -2,7 +2,7 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Network](https://img.shields.io/badge/Network-TRON-red)
-![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933)
+![Node.js](https://img.shields.io/badge/Node.js-20%20%7C%2022%20%7C%2024-339933)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6)
 
 An MCP server for AI-driven DeFi operations on the TRON network through the SUN.IO / SUNSWAP ecosystem.
@@ -104,6 +104,9 @@ Response (JSON format):
 Run the server locally with full capabilities — including write operations if you configure a wallet.
 
 **Install:**
+
+Supported runtimes are Node.js 20, 22, and 24 (`>=20 <25`). Future major versions are not
+claimed until they pass the full CI and packaged CLI handshake matrix.
 
 ```bash
 npm install -g @sun-protocol/sun-mcp-server

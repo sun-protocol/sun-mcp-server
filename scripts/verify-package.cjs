@@ -9,13 +9,14 @@ const path = require('node:path')
 const packageName = '@sun-protocol/sun-mcp-server'
 const repositoryRoot = path.resolve(__dirname, '..')
 const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sun-mcp-package-'))
+const npmCache = process.env.npm_config_cache || path.join(temporaryRoot, 'npm-cache')
 
 function run(command, args, options = {}) {
   return execFileSync(command, args, {
     cwd: repositoryRoot,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, npm_config_cache: path.join(temporaryRoot, 'npm-cache') },
+    env: { ...process.env, npm_config_cache: npmCache },
     ...options,
   })
 }

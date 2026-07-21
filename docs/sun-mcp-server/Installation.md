@@ -2,8 +2,11 @@
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 20+
+- [Node.js](https://nodejs.org/) 20, 22, or 24 (`>=20 <25`)
 - npm
+
+Future Node.js major versions are unsupported until added to the CI build, test, and packaged
+CLI handshake matrix. The Docker image uses the supported Node.js 20 baseline.
 
 ## Setup
 

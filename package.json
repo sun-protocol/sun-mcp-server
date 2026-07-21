@@ -2,6 +2,9 @@
   "name": "@sun-protocol/sun-mcp-server",
   "version": "1.2.1",
   "description": "An MCP server for the SUN.IO (SUNSWAP) ecosystem",
+  "engines": {
+    "node": ">=20 <25"
+  },
   "main": "./dist/index.js",
   "types": "dist/index.d.ts",
   "type": "commonjs",
