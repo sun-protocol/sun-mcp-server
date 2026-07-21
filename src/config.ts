@@ -11,6 +11,7 @@ import {
   parseOptionalBooleanEnv,
   selectScopedConfigValue,
 } from './utils/configValues'
+import { normalizeMcpPath } from './utils/mcpPath'
 
 dotenv.config()
 
@@ -409,7 +410,7 @@ export const config = {
   specConfigs: resolvedSpecConfigs,
   mcpPort: port,
   mcpHost: host,
-  mcpPath: mcpPathRaw.startsWith('/') ? mcpPathRaw : `/${mcpPathRaw}`,
+  mcpPath: normalizeMcpPath(mcpPathRaw),
   mcpCorsOrigins,
   transport,
   targetApiBaseUrl: resolvedSpecConfigs[0].targetApiBaseUrl || '',

@@ -13,6 +13,7 @@ import { z } from 'zod'
 import { registerSunswapTools } from './tools'
 import { initWallet, isWalletConfigured, getWallet } from './wallet'
 import { SunKit, SunAPI } from '@sun-protocol/sun-kit'
+import { getCompatibleMcpPaths } from './utils/mcpPath'
 
 const MCP_ALLOWED_HEADERS =
   'Content-Type, Accept, MCP-Protocol-Version, MCP-Session-Id, Last-Event-ID'
@@ -23,14 +24,6 @@ export interface RunningServer {
   close(): Promise<void>
   forceClose(): Promise<void>
   getInFlightRequestCount(): number
-}
-
-function getCompatibleMcpPaths(configuredPath: string): ReadonlySet<string> {
-  if (configuredPath === '/' || configuredPath === '/mcp') {
-    return new Set(['/', '/mcp'])
-  }
-
-  return new Set([configuredPath])
 }
 
 function applyCorsHeaders(req: IncomingMessage, res: ServerResponse): boolean {
