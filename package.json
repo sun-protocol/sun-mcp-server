@@ -30,6 +30,8 @@
     "lint:fix": "eslint . --fix",
     "docs:tools": "node scripts/generate-tool-catalog.cjs",
     "docs:check": "node scripts/generate-tool-catalog.cjs --check",
+    "security:overrides": "node scripts/verify-security-overrides.cjs",
+    "audit:prod": "npm audit --omit=dev --audit-level=moderate",
     "test": "jest",
     "test:integration": "jest --testMatch='**/test/integration/**/*.test.ts'",
     "test:package": "npm run build && node scripts/verify-package.cjs",
@@ -105,8 +107,6 @@
     "@modelcontextprotocol/sdk": "^1.10.2",
     "@scure/bip32": "^2.0.1",
     "@scure/bip39": "^2.0.1",
-    "@sun-protocol/permit2-sdk": "^1.0.0",
-    "@sun-protocol/universal-router-sdk": "^1.0.1",
     "@types/json-schema": "^7.0.15",
     "axios": "^1.6.7",
     "deepmerge": "^4.3.1",
@@ -119,5 +119,12 @@
     "tronweb": "^6.2.1",
     "yargs": "^17.7.2",
     "zod": "^3.22.4"
+  },
+  "overrides": {
+    "bn.js": "5.2.3",
+    "body-parser": "2.3.0",
+    "uuid": "11.1.1",
+    "ws@^7.0.0": "7.5.13",
+    "ws@^8.0.0": "8.21.1"
   }
 }

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "owner": "SUN Protocol Security",
+  "reviewedAt": "2026-07-21",
+  "reviewBy": "2026-10-19",
+  "resolutions": [
+    {
+      "selector": "ws@^7.0.0",
+      "package": "ws",
+      "major": 7,
+      "version": "7.5.13",
+      "advisories": ["GHSA-96hv-2xvq-fx4p"],
+      "reachability": "No inbound WebSocket server is exposed. This branch is retained by jayson/isomorphic-ws and viem; wallet and RPC imports are regression-tested.",
+      "removalCondition": "Remove after every direct parent requires ws >=7.5.11 or no longer installs ws 7."
+    },
+    {
+      "selector": "ws@^8.0.0",
+      "package": "ws",
+      "major": 8,
+      "version": "8.21.1",
+      "advisories": ["GHSA-58qx-3vcg-4xpx", "GHSA-96hv-2xvq-fx4p"],
+      "reachability": "The server transport is HTTP/stdio, but ethers and viem export optional WebSocket clients. Loading the wallet/RPC stack is regression-tested against the patched release.",
+      "removalCondition": "Remove after TronWeb/ethers and viem resolve to ws >=8.21.0 without an override."
+    },
+    {
+      "selector": "bn.js",
+      "package": "bn.js",
+      "version": "5.2.3",
+      "advisories": ["GHSA-378v-28hj-76wf"],
+      "reachability": "Reachable through SunKit -> Universal Router -> PancakeSwap/Solana utility code during route construction; patched at the dependency boundary and exercised by SUNSWAP tests.",
+      "removalCondition": "Remove after the Universal Router dependency tree requires bn.js >=5.2.3."
+    },
+    {
+      "selector": "uuid",
+      "package": "uuid",
+      "version": "11.1.1",
+      "advisories": ["GHSA-w5hq-g745-h8pq"],
+      "reachability": "jayson calls uuid.v4() without a caller-provided buffer; the vulnerable v3/v5/v6 buffer path is not used. Automatic JSON-RPC ID generation is regression-tested with uuid 11.",
+      "removalCondition": "Remove after jayson requires uuid >=11.1.1 or the Solana dependency is removed."
+    },
+    {
+      "selector": "body-parser",
+      "package": "body-parser",
+      "version": "2.3.0",
+      "advisories": ["GHSA-v422-hmwv-36x6"],
+      "reachability": "Reachable from the MCP SDK Express transport. Middleware construction is regression-tested and the fixed minor release is forced.",
+      "removalCondition": "Remove after the MCP SDK/Express tree requires body-parser >=2.3.0."
+    }
+  ]
+}
