@@ -39,7 +39,7 @@ describe('packaged CLI', () => {
   it('invokes startServer from the executable bin', () => {
     const packageDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'sun-mcp-bin-'))
     const binDirectory = path.join(packageDirectory, 'bin')
-    const distDirectory = path.join(packageDirectory, 'dist/src')
+    const distDirectory = path.join(packageDirectory, 'dist')
 
     fs.mkdirSync(binDirectory, { recursive: true })
     fs.mkdirSync(distDirectory, { recursive: true })
@@ -48,8 +48,8 @@ describe('packaged CLI', () => {
       path.join(binDirectory, 'sun-mcp-server'),
     )
     fs.writeFileSync(
-      path.join(distDirectory, 'server.js'),
-      "exports.runCli = async () => { process.stdout.write('started'); };\n",
+      path.join(distDirectory, 'cli.js'),
+      "exports.main = async () => { process.stdout.write('started'); };\n",
     )
 
     try {

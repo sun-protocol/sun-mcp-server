@@ -484,10 +484,3 @@ async function runCli(): Promise<void> {
 }
 
 export { runCli, startServer }
-
-if (require.main === module) {
-  runCli().catch(() => {
-    console.error('Unhandled error during server startup')
-    process.exit(1)
-  })
-}

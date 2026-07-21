@@ -72,7 +72,7 @@ npm run dev
   "mcpServers": {
     "sun-mcp-server": {
       "command": "node",
-      "args": ["/ABSOLUTE/PATH/TO/sun-mcp-server/dist/src/server.js"],
+      "args": ["/ABSOLUTE/PATH/TO/sun-mcp-server/dist/cli.js"],
       "env": {
         "OPENAPI_SPEC_PATH": "/ABSOLUTE/PATH/TO/sun-mcp-server/specs/sunio-open-api.json",
         "TARGET_API_BASE_URL": "https://open.sun.io"
@@ -93,7 +93,7 @@ npm run dev
     {
       "name": "sun-mcp-server",
       "command": "node",
-      "args": ["/ABSOLUTE/PATH/TO/sun-mcp-server/dist/src/server.js"],
+      "args": ["/ABSOLUTE/PATH/TO/sun-mcp-server/dist/cli.js"],
       "env": {
         "OPENAPI_SPEC_PATH": "/ABSOLUTE/PATH/TO/sun-mcp-server/specs/sunio-open-api.json",
         "TARGET_API_BASE_URL": "https://open.sun.io"

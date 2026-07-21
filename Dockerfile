@@ -9,7 +9,7 @@ RUN npm ci
 
 FROM dependencies AS build
 
-COPY tsconfig.json ./
+COPY tsconfig.json tsconfig.build.json ./
 COPY src ./src
 COPY test ./test
 COPY scripts ./scripts
@@ -30,7 +30,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-COPY --from=build /app/dist/src ./dist/src
+COPY --from=build /app/dist ./dist
 COPY config.json ./
 COPY specs ./specs
 COPY docker/healthcheck.js ./docker/healthcheck.js
@@ -42,4 +42,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD ["node", "docker/healthcheck.js"]
 
-CMD ["node", "dist/src/server.js"]
+CMD ["node", "dist/cli.js"]

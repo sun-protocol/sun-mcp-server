@@ -2,7 +2,7 @@
 
 const http = require('node:http')
 const { LATEST_PROTOCOL_VERSION } = require('@modelcontextprotocol/sdk/types.js')
-const { normalizeMcpPath } = require('../dist/src/utils/mcpPath.js')
+const { normalizeMcpPath } = require('../dist/utils/mcpPath.js')
 
 const host = '127.0.0.1'
 const port = Number.parseInt(process.env.MCP_SERVER_PORT || '8080', 10)

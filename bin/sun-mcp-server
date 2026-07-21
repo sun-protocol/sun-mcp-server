@@ -2,9 +2,9 @@
 
 'use strict'
 
-const { runCli } = require('../dist/src/server.js')
+const { main } = require('../dist/cli.js')
 
-runCli().catch(() => {
+main().catch(() => {
   console.error('Error starting server')
   process.exit(1)
 })
