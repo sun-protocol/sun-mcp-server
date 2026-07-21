@@ -6,7 +6,11 @@ import fs from 'fs'
 import { isHttpUrl } from './utils/httpClient'
 import { getConfigPaths, getPackageDirectory } from './utils/packagePaths'
 import { safeUrlForLogging } from './utils/logging'
-import { getValueWithPriority, parseOptionalBooleanEnv } from './utils/configValues'
+import {
+  getValueWithPriority,
+  parseOptionalBooleanEnv,
+  selectScopedConfigValue,
+} from './utils/configValues'
 
 dotenv.config()
 
@@ -348,9 +352,12 @@ const resolvedSpecConfigs: SpecConfig[] = hasMultiSpecsInJson
       )
       .map((specEntry: any): SpecConfig => {
         const perSpecHeaders = parseHeaders(specEntry.headers)
-        const specOverlayInput = specEntry.overlays ?? overlays
-        const specOverlayBaseDirectory =
-          specEntry.overlays !== undefined ? configBaseDirectory : overlaysBaseDirectory
+        const selectedOverlays = selectScopedConfigValue(
+          specEntry.overlays,
+          overlays,
+          configBaseDirectory,
+          overlaysBaseDirectory,
+        )
         const perSpecTimeout =
           typeof specEntry.timeout === 'number' ? specEntry.timeout : requestTimeoutMs
         const perSpecDisableXMcp =
@@ -359,7 +366,7 @@ const resolvedSpecConfigs: SpecConfig[] = hasMultiSpecsInJson
         return {
           name: typeof specEntry.name === 'string' ? specEntry.name.trim() : undefined,
           specPath: resolveSpecPath(specEntry.spec.trim(), configBaseDirectory),
-          overlayPaths: resolvePathList(specOverlayInput, specOverlayBaseDirectory),
+          overlayPaths: resolvePathList(selectedOverlays.value, selectedOverlays.baseDirectory),
           targetApiBaseUrl:
             typeof specEntry.targetUrl === 'string' && specEntry.targetUrl.trim()
               ? specEntry.targetUrl.trim()

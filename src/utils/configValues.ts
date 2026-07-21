@@ -20,3 +20,15 @@ export function parseOptionalBooleanEnv(
 
   throw new Error(`Invalid ${variableName}: expected "true" or "false"`)
 }
+
+export function selectScopedConfigValue<T>(
+  scopedValue: T | null | undefined,
+  inheritedValue: T,
+  scopedBaseDirectory: string,
+  inheritedBaseDirectory: string,
+): { value: T; baseDirectory: string } {
+  const hasScopedValue = scopedValue !== null && scopedValue !== undefined
+  return hasScopedValue
+    ? { value: scopedValue, baseDirectory: scopedBaseDirectory }
+    : { value: inheritedValue, baseDirectory: inheritedBaseDirectory }
+}
