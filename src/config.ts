@@ -5,6 +5,7 @@ import { hideBin } from 'yargs/helpers'
 import fs from 'fs'
 import { isHttpUrl } from './utils/httpClient'
 import { getConfigPaths, getPackageDirectory } from './utils/packagePaths'
+import { safeUrlForLogging } from './utils/logging'
 
 dotenv.config()
 
@@ -439,7 +440,7 @@ if (config.specConfigs.length > 1) {
       console.error(`      Overlays: ${specCfg.overlayPaths.join(', ')}`)
     }
     if (specCfg.targetApiBaseUrl) {
-      console.error(`      Target API Base URL: ${specCfg.targetApiBaseUrl}`)
+      console.error(`      Target API Base URL: ${safeUrlForLogging(specCfg.targetApiBaseUrl)}`)
     }
     console.error(`      Timeout: ${specCfg.requestTimeoutMs}ms`)
     if (Object.keys(specCfg.customHeaders).length > 0) {
@@ -464,7 +465,7 @@ if (config.transport === 'streamable-http') {
   console.error(`- MCP CORS Origins: ${config.mcpCorsOrigins.join(', ') || '(disabled)'}`)
 }
 if (config.targetApiBaseUrl) {
-  console.error(`- Target API Base URL: ${config.targetApiBaseUrl}`)
+  console.error(`- Target API Base URL: ${safeUrlForLogging(config.targetApiBaseUrl)}`)
 } else {
   console.error(`- Target API Base URL: Will use 'servers' from OpenAPI spec.`)
 }

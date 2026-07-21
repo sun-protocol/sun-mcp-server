@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import { safeUrlForLogging } from './logging'
 
 const DEFAULT_FETCH_TIMEOUT_MS = 10000
 const DEFAULT_MAX_BYTES = 2 * 1024 * 1024 // 2MB
@@ -29,6 +30,7 @@ function isPrivateOrLocalHost(hostname: string): boolean {
  */
 export async function fetchFromUrl(url: string): Promise<string> {
   let timeout: NodeJS.Timeout | undefined
+  const safeUrl = safeUrlForLogging(url)
   try {
     const parsed = new URL(url)
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
@@ -43,7 +45,7 @@ export async function fetchFromUrl(url: string): Promise<string> {
     const controller = new AbortController()
     timeout = setTimeout(() => controller.abort(), timeoutMs)
 
-    console.error(`Fetching from URL: ${url}`)
+    console.error(`Fetching from URL: ${safeUrl}`)
     const response = await fetch(url, { signal: controller.signal })
 
     if (!response.ok) {
@@ -54,11 +56,12 @@ export async function fetchFromUrl(url: string): Promise<string> {
     if (content.length > maxBytes) {
       throw new Error(`Response too large: ${content.length} bytes (max ${maxBytes})`)
     }
-    console.error(`Successfully fetched ${content.length} bytes from ${url}`)
+    console.error(`Successfully fetched ${content.length} bytes from ${safeUrl}`)
     return content
-  } catch (error: any) {
-    console.error(`Error fetching from URL ${url}: ${error.message}`)
-    throw error
+  } catch (error) {
+    const errorName = error instanceof Error ? error.name : 'Error'
+    console.error(`Error fetching from URL ${safeUrl}: ${errorName}`)
+    throw new Error(`Remote fetch failed: ${errorName}`)
   } finally {
     if (timeout) clearTimeout(timeout)
   }
