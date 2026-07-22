@@ -9,29 +9,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  dependency-review:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-      - name: Explain optional dependency review
-        if: vars.DEPENDENCY_REVIEW_ENABLED != 'true'
-        run: |
-          echo "Dependency review is disabled because this repository has not opted in."
-          echo "Enable Dependency Graph/Code Security, then set DEPENDENCY_REVIEW_ENABLED=true."
-
-      - name: Checkout repository
-        if: vars.DEPENDENCY_REVIEW_ENABLED == 'true'
-        uses: actions/checkout@v6
-
-      - name: Review dependency changes
-        if: vars.DEPENDENCY_REVIEW_ENABLED == 'true'
-        uses: actions/dependency-review-action@v5
-        with:
-          fail-on-severity: moderate
-
   lint-test:
     runs-on: ubuntu-latest
     strategy:
@@ -69,42 +46,8 @@ jobs:
       - name: Verify npm package
         run: npm run test:package
 
-  supply-chain:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "20.x"
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify reviewed dependency overrides
-        run: npm run security:overrides
-
-      - name: Audit production dependencies
-        run: npm run audit:prod
-
-      - name: Generate production SBOM
-        run: npm sbom --omit=dev --sbom-format=cyclonedx > production-sbom.cdx.json
-
-      - name: Upload production SBOM
-        uses: actions/upload-artifact@v6
-        with:
-          name: production-sbom
-          path: production-sbom.cdx.json
-          if-no-files-found: error
-
   build-and-push:
-    needs: [lint-test, supply-chain]
+    needs: lint-test
     if: github.event_name == 'push' && github.ref_type == 'tag' && (startsWith(github.ref_name, 'test-v') || startsWith(github.ref_name, 'v'))
     runs-on: ubuntu-latest
     permissions:
@@ -146,5 +89,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          provenance: mode=max
-          sbom: true

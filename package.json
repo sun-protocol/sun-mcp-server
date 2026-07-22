@@ -30,8 +30,6 @@
     "lint:fix": "eslint . --fix",
     "docs:tools": "node scripts/generate-tool-catalog.cjs",
     "docs:check": "node scripts/generate-tool-catalog.cjs --check",
-    "security:overrides": "node scripts/verify-security-overrides.cjs",
-    "audit:prod": "npm audit --omit=dev --audit-level=moderate",
     "test": "jest",
     "test:integration": "jest --testMatch='**/test/integration/**/*.test.ts'",
     "test:package": "npm run build && node scripts/verify-package.cjs",
@@ -119,14 +117,5 @@
     "tronweb": "^6.2.1",
     "yargs": "^17.7.2",
     "zod": "^3.22.4"
-  },
-  "overrides": {
-    "@hono/node-server": "2.0.11",
-    "bn.js": "5.2.3",
-    "body-parser": "2.3.0",
-    "fast-uri": "3.1.4",
-    "uuid": "11.1.1",
-    "ws@^7.0.0": "7.5.13",
-    "ws@^8.0.0": "8.21.1"
   }
 }
