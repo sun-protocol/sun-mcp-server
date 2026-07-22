@@ -16,11 +16,19 @@ jobs:
       contents: read
 
     steps:
+      - name: Explain optional dependency review
+        if: vars.DEPENDENCY_REVIEW_ENABLED != 'true'
+        run: |
+          echo "Dependency review is disabled because this repository has not opted in."
+          echo "Enable Dependency Graph/Code Security, then set DEPENDENCY_REVIEW_ENABLED=true."
+
       - name: Checkout repository
-        uses: actions/checkout@v4
+        if: vars.DEPENDENCY_REVIEW_ENABLED == 'true'
+        uses: actions/checkout@v6
 
       - name: Review dependency changes
-        uses: actions/dependency-review-action@v4
+        if: vars.DEPENDENCY_REVIEW_ENABLED == 'true'
+        uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: moderate
 
@@ -35,10 +43,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -68,10 +76,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20.x"
           cache: npm
@@ -89,7 +97,7 @@ jobs:
         run: npm sbom --omit=dev --sbom-format=cyclonedx > production-sbom.cdx.json
 
       - name: Upload production SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: production-sbom
           path: production-sbom.cdx.json
@@ -107,7 +115,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.ref }}
 
