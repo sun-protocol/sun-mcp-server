@@ -1,9 +1,25 @@
 {
   "schemaVersion": 1,
   "owner": "SUN Protocol Security",
-  "reviewedAt": "2026-07-21",
-  "reviewBy": "2026-10-19",
+  "reviewedAt": "2026-07-22",
+  "reviewBy": "2026-10-20",
   "resolutions": [
+    {
+      "selector": "@hono/node-server",
+      "package": "@hono/node-server",
+      "version": "2.0.11",
+      "advisories": ["GHSA-frvp-7c67-39w9"],
+      "reachability": "The package is reachable through the MCP SDK Streamable HTTP transport, which calls getRequestListener(); the advisory's serve-static path is not imported. The fixed major preserves the used API and supports Node 20/22/24.",
+      "removalCondition": "Remove after the MCP SDK requires @hono/node-server >=2.0.5."
+    },
+    {
+      "selector": "fast-uri",
+      "package": "fast-uri",
+      "version": "3.1.4",
+      "advisories": ["GHSA-v2hh-gcrm-f6hx"],
+      "reachability": "Reachable through AJV URI validation in Swagger Parser and the MCP SDK; force the fixed patch release within AJV's declared semver range.",
+      "removalCondition": "Remove after every AJV dependency resolves to fast-uri >=3.1.4 without an override."
+    },
     {
       "selector": "ws@^7.0.0",
       "package": "ws",

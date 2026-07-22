@@ -77,6 +77,16 @@ assert.equal(new BN('ffffffff', 16).addn(1).toString(16), '100000000')
 const bodyParser = require('body-parser')
 assert.equal(typeof bodyParser.json({ limit: '1mb' }), 'function')
 
+const { getRequestListener } = require('@hono/node-server')
+assert.equal(typeof getRequestListener, 'function')
+
+const fastUri = require('fast-uri')
+assert.match(
+  fastUri.parse('http://evil.com\\@allowed.com').error,
+  /literal backslash/i,
+  'fast-uri must reject host-confusion inputs before URL consumers normalize them',
+)
+
 const { TronWeb } = require('tronweb')
 assert.equal(TronWeb.isAddress('T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb'), true)
 
