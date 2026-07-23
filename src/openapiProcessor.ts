@@ -6,6 +6,10 @@ import YAML from 'js-yaml'
 import { config } from './config'
 import { isHttpUrl, fetchFromUrl } from './utils/httpClient'
 import type { SpecConfig } from './config'
+import { safeUrlForLogging } from './utils/logging'
+
+const resourceForLogging = (resource: string): string =>
+  isHttpUrl(resource) ? safeUrlForLogging(resource) : resource
 
 /**
  * Validates an OpenAPI specification for required elements
@@ -58,13 +62,14 @@ function validateOpenApiSpec(api: any): void {
 }
 
 async function loadSpec(filePath: string): Promise<any> {
-  console.error(`Loading OpenAPI spec from: ${filePath}`)
+  const safeFilePath = resourceForLogging(filePath)
+  console.error(`Loading OpenAPI spec from: ${safeFilePath}`)
   try {
     let api
 
     // Handle HTTP URLs
     if (isHttpUrl(filePath)) {
-      console.error(`Detected HTTP URL for spec: ${filePath}`)
+      console.error(`Detected HTTP URL for spec: ${safeFilePath}`)
       // Use our custom HTTP client instead of letting SwaggerParser handle URLs
       const content = await fetchFromUrl(filePath)
       // Parse the content based on file extension
@@ -90,7 +95,7 @@ async function loadSpec(filePath: string): Promise<any> {
 
     return api
   } catch (err: any) {
-    console.error(`Error loading/parsing OpenAPI spec: ${filePath}`, err.message)
+    console.error(`Error loading/parsing OpenAPI spec: ${safeFilePath}`, err.message)
     throw err
   }
 }
@@ -160,7 +165,8 @@ function validateOverlay(overlay: any): boolean {
 }
 
 async function loadOverlay(filePath: string): Promise<any> {
-  console.error(`Loading overlay file: ${filePath}`)
+  const safeFilePath = resourceForLogging(filePath)
+  console.error(`Loading overlay file: ${safeFilePath}`)
   try {
     let content: string
 
@@ -188,7 +194,7 @@ async function loadOverlay(filePath: string): Promise<any> {
 
     return overlay
   } catch (err: any) {
-    console.error(`Error loading overlay file ${filePath}:`, err.message)
+    console.error(`Error loading overlay file ${safeFilePath}:`, err.message)
     throw err
   }
 }
@@ -219,10 +225,12 @@ export async function getProcessedOpenApi(specConfig?: SpecConfig): Promise<any>
         const overlayApplier = new OverlayApplier()
         baseApi = overlayApplier.apply(baseApi, overlayJson)
 
-        console.error(`Applied overlay: ${overlayPath}`)
-      } catch (err) {
+        console.error(`Applied overlay: ${resourceForLogging(overlayPath)}`)
+      } catch {
         // Decide whether to continue or fail on overlay error
-        console.error(`Failed to apply overlay ${overlayPath}. Continuing without it.`, err)
+        console.error(
+          `Failed to apply overlay ${resourceForLogging(overlayPath)}. Continuing without it.`,
+        )
         // throw err; // Or re-throw to stop the process
       }
     }
@@ -239,7 +247,9 @@ export async function getProcessedOpenApi(specConfig?: SpecConfig): Promise<any>
       'Cannot determine target API URL. Either configure targetApiBaseUrl or ensure OpenAPI spec includes servers.',
     )
   } else if (!selectedSpec.targetApiBaseUrl) {
-    console.error(`Using server URL from OpenAPI spec: ${baseApi.servers[0].url}`)
+    console.error(
+      `Using server URL from OpenAPI spec: ${safeUrlForLogging(baseApi.servers[0].url)}`,
+    )
   }
 
   return baseApi

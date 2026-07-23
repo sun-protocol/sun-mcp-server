@@ -7,6 +7,18 @@ Default sample configuration in `config.json`:
 - Spec: `./specs/sunio-open-api.json`
 - Target URL: `https://open.sun.io`
 
+### Configuration File Precedence
+
+1. `--config <path>`
+2. `CONFIG_FILE=<path>`
+3. `./openapi-mcp.json`
+4. `./.openapi-mcp.json`
+5. `./config.json`
+6. The bundled `config.json` fallback
+
+Relative OpenAPI specification and overlay paths are resolved from the directory containing
+the selected configuration file.
+
 ### Environment Variables
 
 | Variable | Description | Default |
@@ -16,11 +28,18 @@ Default sample configuration in `config.json`:
 | `MCP_TRANSPORT` | Transport: `stdio` or `streamable-http` | `stdio` |
 | `MCP_SERVER_HOST` | HTTP server host | `127.0.0.1` |
 | `MCP_SERVER_PORT` | HTTP server port | `8080` |
-| `MCP_SERVER_PATH` | HTTP MCP endpoint path | `/mcp` |
+| `MCP_SERVER_PATH` | Primary HTTP MCP endpoint path; `/` and `/mcp` are compatible aliases | `/` |
+| `MCP_CORS_ORIGINS` | Comma-separated allowed browser origins; leave empty to deny browser origins | (disabled) |
+| `MCP_SHUTDOWN_TIMEOUT_MS` | Graceful shutdown deadline before forced exit | `5000` |
 | `MCP_WHITELIST_OPERATIONS` | Comma-separated list of allowed operations | (all) |
 | `MCP_BLACKLIST_OPERATIONS` | Comma-separated list of blocked operations | (none) |
 | `CUSTOM_HEADERS` | Custom headers as JSON | |
 | `TARGET_API_TIMEOUT_MS` | API request timeout in ms | |
+
+Browser preflight accepts the MCP protocol headers plus `Authorization`. Unknown requested
+headers are rejected. Cookie credentials are not supported, and the server never emits
+`Access-Control-Allow-Credentials`; use an exact origin allowlist for authenticated browser
+deployments.
 
 ## TRON Wallet Configuration
 
@@ -42,7 +61,9 @@ The runtime settings below are still supported by this server:
 
 ## SUNSWAP Contract Addresses
 
-The server ships with default contract addresses in `src/sunswap/constants.ts`:
+Runtime network configuration and default addresses are owned by `@sun-protocol/sun-kit` and
+consumed through `SunKit` in `src/tools/sunswap.ts`. The installed SDK version is the source of
+truth; the tables below are deployment reference values, not a second runtime configuration source.
 
 ### V2
 

@@ -1,9 +1,17 @@
 import dotenv from 'dotenv'
 import path from 'path'
-import yargs from 'yargs/yargs'
+import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import fs from 'fs'
 import { isHttpUrl } from './utils/httpClient'
+import { getConfigPaths, getPackageDirectory } from './utils/packagePaths'
+import { safeUrlForLogging } from './utils/logging'
+import {
+  getValueWithPriority,
+  parseOptionalBooleanEnv,
+  selectScopedConfigValue,
+} from './utils/configValues'
+import { normalizeMcpPath } from './utils/mcpPath'
 
 dotenv.config()
 
@@ -51,7 +59,13 @@ const argv = yargs(hideBin(process.argv))
   })
   .option('mcpPath', {
     type: 'string',
-    description: 'HTTP path for streamable HTTP MCP endpoint',
+    description:
+      'HTTP path for streamable HTTP MCP endpoint; / and /mcp are served as compatible aliases',
+  })
+  .option('corsOrigins', {
+    type: 'string',
+    description:
+      'Comma-separated allowed origins for streamable HTTP CORS; leave empty to deny browser origins',
   })
   .option('transport', {
     type: 'string',
@@ -123,68 +137,33 @@ function loadJsonConfig(configPath: string): Record<string, any> {
   return {}
 }
 
-function getPackageDirectory(): string | null {
-  try {
-    const mainModulePath = require.main?.filename || ''
-    let packageDir = path.dirname(mainModulePath)
-
-    if (packageDir.includes('dist/src')) {
-      packageDir = path.resolve(packageDir, '../..')
-    } else if (packageDir.includes('dist')) {
-      packageDir = path.resolve(packageDir, '..')
-    }
-
-    if (fs.existsSync(path.join(packageDir, 'package.json'))) {
-      return packageDir
-    }
-  } catch (error) {
-    console.error('Error determining package directory:', error)
-  }
-  return null
-}
-
-function getConfigPaths(): string[] {
-  const packageDir = getPackageDirectory()
-  if (packageDir) {
-    const packageConfigPath = path.join(packageDir, 'config.json')
-    console.error(`Checking for package config at: ${packageConfigPath}`)
-    return [packageConfigPath]
-  }
-
-  return [
-    path.resolve(process.cwd(), 'config.json'),
-    path.resolve(process.cwd(), 'openapi-mcp.json'),
-    path.resolve(process.cwd(), '.openapi-mcp.json'),
-  ]
-}
-
 let jsonConfig: Record<string, any> = {}
+let loadedConfigPath: string | null = null
 if (argv.config) {
-  jsonConfig = loadJsonConfig(path.resolve(process.cwd(), argv.config))
+  const configPath = path.resolve(process.cwd(), argv.config)
+  jsonConfig = loadJsonConfig(configPath)
+  loadedConfigPath = Object.keys(jsonConfig).length > 0 ? configPath : null
 } else if (process.env.CONFIG_FILE) {
-  jsonConfig = loadJsonConfig(process.env.CONFIG_FILE)
+  const configPath = path.resolve(process.cwd(), process.env.CONFIG_FILE)
+  jsonConfig = loadJsonConfig(configPath)
+  loadedConfigPath = Object.keys(jsonConfig).length > 0 ? configPath : null
 } else {
+  const packageDirectory = getPackageDirectory()
+  if (packageDirectory) {
+    console.error(`Bundled config fallback: ${path.join(packageDirectory, 'config.json')}`)
+  }
   const configPaths = getConfigPaths()
   for (const configPath of configPaths) {
     const cfg = loadJsonConfig(configPath)
     if (Object.keys(cfg).length > 0) {
       jsonConfig = cfg
+      loadedConfigPath = configPath
       break
     }
   }
 }
 
-const getValueWithPriority = <T>(
-  cliValue: T | undefined,
-  envValue: T | undefined,
-  configValue: T | undefined,
-  defaultValue: T,
-): T => {
-  if (cliValue !== undefined) return cliValue
-  if (envValue !== undefined) return envValue
-  if (configValue !== undefined) return configValue
-  return defaultValue
-}
+const configBaseDirectory = loadedConfigPath ? path.dirname(loadedConfigPath) : process.cwd()
 
 const parsePatternList = (value: unknown): string[] | null => {
   if (value === null || value === undefined) return null
@@ -229,11 +208,12 @@ const parseHeaders = (input: unknown): Record<string, string> => {
   return {}
 }
 
-const resolveSpecPath = (value: string): string => (isHttpUrl(value) ? value : path.resolve(value))
-const resolvePathList = (input: unknown): string[] => {
+const resolveSpecPath = (value: string, baseDirectory: string): string =>
+  isHttpUrl(value) ? value : path.resolve(baseDirectory, value)
+const resolvePathList = (input: unknown, baseDirectory: string): string[] => {
   const raw = parsePatternList(input)
   if (!raw) return []
-  return raw.map((p) => (isHttpUrl(p) ? p : path.resolve(p)))
+  return raw.map((p) => (isHttpUrl(p) ? p : path.resolve(baseDirectory, p)))
 }
 
 const envValues = {
@@ -242,6 +222,7 @@ const envValues = {
   port: process.env.MCP_SERVER_PORT ? parseInt(process.env.MCP_SERVER_PORT, 10) : undefined,
   host: process.env.MCP_SERVER_HOST,
   mcpPath: process.env.MCP_SERVER_PATH,
+  corsOrigins: process.env.MCP_CORS_ORIGINS,
   transport: process.env.MCP_TRANSPORT as TransportMode | undefined,
   targetUrl: process.env.TARGET_API_BASE_URL,
   timeout: process.env.TARGET_API_TIMEOUT_MS
@@ -253,14 +234,27 @@ const envValues = {
   securitySchemeName: process.env.SECURITY_SCHEME_NAME,
   securityCredentials: process.env.SECURITY_CREDENTIALS,
   headers: process.env.CUSTOM_HEADERS,
-  disableXMcp: process.env.DISABLE_X_MCP === 'true',
+  disableXMcp: parseOptionalBooleanEnv(process.env.DISABLE_X_MCP, 'DISABLE_X_MCP'),
 }
 
 const specPath = getValueWithPriority(argv.spec, envValues.specPath, jsonConfig.spec, '')
 const overlays = getValueWithPriority(argv.overlays, envValues.overlays, jsonConfig.overlays, '')
+const specPathBaseDirectory =
+  argv.spec !== undefined || envValues.specPath !== undefined ? process.cwd() : configBaseDirectory
+const overlaysBaseDirectory =
+  argv.overlays !== undefined || envValues.overlays !== undefined
+    ? process.cwd()
+    : configBaseDirectory
 const port = getValueWithPriority(argv.port, envValues.port, jsonConfig.port, 8080)
 const host = getValueWithPriority(argv.host, envValues.host, jsonConfig.host, '127.0.0.1')
-const mcpPathRaw = getValueWithPriority(argv.mcpPath, envValues.mcpPath, jsonConfig.mcpPath, '/mcp')
+const mcpPathRaw = getValueWithPriority(argv.mcpPath, envValues.mcpPath, jsonConfig.mcpPath, '/')
+const corsOriginsRaw = getValueWithPriority(
+  argv.corsOrigins,
+  envValues.corsOrigins,
+  jsonConfig.corsOrigins,
+  '',
+)
+const mcpCorsOrigins = parsePatternList(corsOriginsRaw) ?? []
 const transport = getValueWithPriority(
   argv.transport as TransportMode | undefined,
   envValues.transport,
@@ -341,14 +335,12 @@ if (argv.headers) {
   customHeaders = { ...customHeaders, ...parseHeaders(jsonConfig.headers) }
 }
 
-const disableXMcp =
-  argv.disableXMcp !== undefined
-    ? argv.disableXMcp
-    : envValues.disableXMcp !== undefined
-      ? envValues.disableXMcp
-      : jsonConfig.disableXMcp !== undefined
-        ? jsonConfig.disableXMcp
-        : false
+const disableXMcp = getValueWithPriority(
+  argv.disableXMcp,
+  envValues.disableXMcp,
+  typeof jsonConfig.disableXMcp === 'boolean' ? jsonConfig.disableXMcp : undefined,
+  false,
+)
 
 const globalWhitelistPatterns = parsePatternList(whitelist)
 const globalBlacklistPatterns = parsePatternList(blacklist) || []
@@ -361,6 +353,12 @@ const resolvedSpecConfigs: SpecConfig[] = hasMultiSpecsInJson
       )
       .map((specEntry: any): SpecConfig => {
         const perSpecHeaders = parseHeaders(specEntry.headers)
+        const selectedOverlays = selectScopedConfigValue(
+          specEntry.overlays,
+          overlays,
+          configBaseDirectory,
+          overlaysBaseDirectory,
+        )
         const perSpecTimeout =
           typeof specEntry.timeout === 'number' ? specEntry.timeout : requestTimeoutMs
         const perSpecDisableXMcp =
@@ -368,8 +366,8 @@ const resolvedSpecConfigs: SpecConfig[] = hasMultiSpecsInJson
 
         return {
           name: typeof specEntry.name === 'string' ? specEntry.name.trim() : undefined,
-          specPath: resolveSpecPath(specEntry.spec.trim()),
-          overlayPaths: resolvePathList(specEntry.overlays ?? overlays),
+          specPath: resolveSpecPath(specEntry.spec.trim(), configBaseDirectory),
+          overlayPaths: resolvePathList(selectedOverlays.value, selectedOverlays.baseDirectory),
           targetApiBaseUrl:
             typeof specEntry.targetUrl === 'string' && specEntry.targetUrl.trim()
               ? specEntry.targetUrl.trim()
@@ -386,8 +384,8 @@ const resolvedSpecConfigs: SpecConfig[] = hasMultiSpecsInJson
       })
   : [
       {
-        specPath: resolveSpecPath(specPath),
-        overlayPaths: resolvePathList(overlays),
+        specPath: resolveSpecPath(specPath, specPathBaseDirectory),
+        overlayPaths: resolvePathList(overlays, overlaysBaseDirectory),
         targetApiBaseUrl: targetUrl || undefined,
         requestTimeoutMs,
         customHeaders,
@@ -412,7 +410,8 @@ export const config = {
   specConfigs: resolvedSpecConfigs,
   mcpPort: port,
   mcpHost: host,
-  mcpPath: mcpPathRaw.startsWith('/') ? mcpPathRaw : `/${mcpPathRaw}`,
+  mcpPath: normalizeMcpPath(mcpPathRaw),
+  mcpCorsOrigins,
   transport,
   targetApiBaseUrl: resolvedSpecConfigs[0].targetApiBaseUrl || '',
   requestTimeoutMs: resolvedSpecConfigs[0].requestTimeoutMs,
@@ -436,7 +435,7 @@ if (config.specConfigs.length > 1) {
       console.error(`      Overlays: ${specCfg.overlayPaths.join(', ')}`)
     }
     if (specCfg.targetApiBaseUrl) {
-      console.error(`      Target API Base URL: ${specCfg.targetApiBaseUrl}`)
+      console.error(`      Target API Base URL: ${safeUrlForLogging(specCfg.targetApiBaseUrl)}`)
     }
     console.error(`      Timeout: ${specCfg.requestTimeoutMs}ms`)
     if (Object.keys(specCfg.customHeaders).length > 0) {
@@ -458,9 +457,10 @@ console.error(`- MCP Server Port: ${config.mcpPort}`)
 console.error(`- MCP Transport: ${config.transport}`)
 if (config.transport === 'streamable-http') {
   console.error(`- MCP HTTP Endpoint: http://${config.mcpHost}:${config.mcpPort}${config.mcpPath}`)
+  console.error(`- MCP CORS Origins: ${config.mcpCorsOrigins.join(', ') || '(disabled)'}`)
 }
 if (config.targetApiBaseUrl) {
-  console.error(`- Target API Base URL: ${config.targetApiBaseUrl}`)
+  console.error(`- Target API Base URL: ${safeUrlForLogging(config.targetApiBaseUrl)}`)
 } else {
   console.error(`- Target API Base URL: Will use 'servers' from OpenAPI spec.`)
 }

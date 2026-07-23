@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 
-"use strict";
+'use strict'
 
-require("../dist/src/server.js");
+const { main } = require('../dist/cli.js')
+
+main().catch(() => {
+  console.error('Error starting server')
+  process.exit(1)
+})

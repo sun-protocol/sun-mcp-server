@@ -2,8 +2,11 @@
 
 ## 前置要求
 
-- [Node.js](https://nodejs.org/) 20+
+- [Node.js](https://nodejs.org/) 20、22 或 24（`>=20 <25`）
 - npm
+
+未来 Node.js 大版本在加入 CI 构建、测试及发布包 CLI 握手矩阵前均不属于支持范围。
+Docker 镜像使用受支持的 Node.js 20 基线。
 
 ## 安装步骤
 
@@ -25,8 +28,35 @@ npm start
 ### HTTP 模式
 
 ```bash
-npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /mcp
+npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
 ```
+
+通过 npm 安装的 `sun-mcp-server` 命令会依次检查当前工作目录下的
+`openapi-mcp.json`、`.openapi-mcp.json` 和 `config.json`，均不存在时再使用包内置
+`config.json` 和 OpenAPI 规范。包内兜底配置使用 `stdio`，Docker 镜像则显式选择
+`streamable-http`；只有覆盖规范时才需要配置 `OPENAPI_SPEC_PATH`。
+
+当 `MCP_SERVER_PATH` 配置为 `/` 或 `/mcp` 时，服务会同时接受这两个路径以兼容不同 MCP 客户端。
+
+### Docker
+
+```bash
+docker build -t sun-mcp-server:local .
+docker run --rm -p 8080:8080 sun-mcp-server:local
+```
+
+镜像默认监听 `0.0.0.0:8080`，在根路径 `/` 提供 MCP 服务，并内置 OpenAPI 规范。
+需要覆盖运行参数时，直接传入环境变量：
+
+```bash
+docker run --rm -p 9090:9090 \
+  -e MCP_SERVER_PORT=9090 \
+  -e MCP_SERVER_PATH=/ \
+  sun-mcp-server:local
+```
+
+推送 `test-v*` Git Tag 时发布 Docker `test` 标签；推送 `v*` Tag 时发布完整 Git
+标签。仓库需配置 `DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN` Secrets。
 
 ### 开发模式
 
@@ -45,7 +75,7 @@ npm run dev
   "mcpServers": {
     "sun-mcp-server": {
       "command": "node",
-      "args": ["/绝对路径/sun-mcp-server/dist/src/server.js"],
+      "args": ["/绝对路径/sun-mcp-server/dist/cli.js"],
       "env": {
         "OPENAPI_SPEC_PATH": "/绝对路径/sun-mcp-server/specs/sunio-open-api.json",
         "TARGET_API_BASE_URL": "https://open.sun.io"
@@ -66,7 +96,7 @@ npm run dev
     {
       "name": "sun-mcp-server",
       "command": "node",
-      "args": ["/绝对路径/sun-mcp-server/dist/src/server.js"],
+      "args": ["/绝对路径/sun-mcp-server/dist/cli.js"],
       "env": {
         "OPENAPI_SPEC_PATH": "/绝对路径/sun-mcp-server/specs/sunio-open-api.json",
         "TARGET_API_BASE_URL": "https://open.sun.io"

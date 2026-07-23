@@ -2,8 +2,11 @@
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 20+
+- [Node.js](https://nodejs.org/) 20, 22, or 24 (`>=20 <25`)
 - npm
+
+Future Node.js major versions are unsupported until added to the CI build, test, and packaged
+CLI handshake matrix. The Docker image uses the supported Node.js 20 baseline.
 
 ## Setup
 
@@ -25,8 +28,35 @@ npm start
 ### HTTP Mode
 
 ```bash
-npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /mcp
+npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
 ```
+
+The packaged `sun-mcp-server` command first checks the working directory for
+`openapi-mcp.json`, `.openapi-mcp.json`, or `config.json`, then falls back to the bundled
+`config.json` and OpenAPI spec. The bundled fallback uses `stdio`; the Docker image explicitly
+selects `streamable-http`. `OPENAPI_SPEC_PATH` is only required when overriding the spec.
+
+When `MCP_SERVER_PATH` is `/` or `/mcp`, both paths are accepted for MCP client compatibility.
+
+### Docker
+
+```bash
+docker build -t sun-mcp-server:local .
+docker run --rm -p 8080:8080 sun-mcp-server:local
+```
+
+The image listens on `0.0.0.0:8080`, serves MCP at `/`, and includes the bundled OpenAPI
+specification. Override runtime settings with environment variables when needed:
+
+```bash
+docker run --rm -p 9090:9090 \
+  -e MCP_SERVER_PORT=9090 \
+  -e MCP_SERVER_PATH=/ \
+  sun-mcp-server:local
+```
+
+Git tags matching `test-v*` publish the Docker tag `test`; tags matching `v*` publish the
+full Git tag. Configure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as repository secrets.
 
 ### Development Mode
 
@@ -45,7 +75,7 @@ npm run dev
   "mcpServers": {
     "sun-mcp-server": {
       "command": "node",
-      "args": ["/ABSOLUTE/PATH/TO/sun-mcp-server/dist/src/server.js"],
+      "args": ["/ABSOLUTE/PATH/TO/sun-mcp-server/dist/cli.js"],
       "env": {
         "OPENAPI_SPEC_PATH": "/ABSOLUTE/PATH/TO/sun-mcp-server/specs/sunio-open-api.json",
         "TARGET_API_BASE_URL": "https://open.sun.io"
@@ -66,7 +96,7 @@ npm run dev
     {
       "name": "sun-mcp-server",
       "command": "node",
-      "args": ["/ABSOLUTE/PATH/TO/sun-mcp-server/dist/src/server.js"],
+      "args": ["/ABSOLUTE/PATH/TO/sun-mcp-server/dist/cli.js"],
       "env": {
         "OPENAPI_SPEC_PATH": "/ABSOLUTE/PATH/TO/sun-mcp-server/specs/sunio-open-api.json",
         "TARGET_API_BASE_URL": "https://open.sun.io"

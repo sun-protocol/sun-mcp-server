@@ -2,6 +2,7 @@ import axios, { AxiosRequestConfig, AxiosError } from 'axios'
 import type { ApiCallDetails, ApiClientResponse } from './types'
 import { config } from './config'
 import type { OpenAPIV3 } from 'openapi-types'
+import { safeErrorCode, safeUrlForLogging } from './utils/logging'
 
 /**
  * Applies security requirements to an API request based on OpenAPI security definitions
@@ -298,32 +299,18 @@ export async function executeApiCall(
         error: 'Required API security credentials are missing or invalid',
       }
     }
-  } catch (secErr: any) {
-    console.error('Security application failed:', secErr)
-    return { success: false, statusCode: 401, error: `Security setup failed: ${secErr.message}` }
+  } catch {
+    console.error('Security application failed')
+    return { success: false, statusCode: 401, error: 'Security setup failed' }
   }
-
-  const sanitizedHeaders = Object.fromEntries(
-    Object.entries(requestConfig.headers || {}).map(([key, value]) => {
-      const lower = key.toLowerCase()
-      if (
-        lower === 'authorization' ||
-        lower === 'cookie' ||
-        lower.includes('api-key') ||
-        lower.includes('token')
-      ) {
-        return [key, '[REDACTED]']
-      }
-      return [key, value]
-    }),
-  )
 
   console.error(`Making HTTP request:`, {
     method: requestConfig.method,
-    url: requestConfig.url,
-    params: requestConfig.params,
-    headers: sanitizedHeaders,
-    data: requestConfig.data ? '[Request Body Present]' : undefined, // Avoid logging sensitive data
+    origin: safeUrlForLogging(serverUrl),
+    pathTemplate,
+    queryParameterNames: Object.keys(requestConfig.params || {}),
+    headerNames: Object.keys(requestConfig.headers || {}),
+    hasBody: requestConfig.data !== undefined,
   })
 
   try {
@@ -343,13 +330,13 @@ export async function executeApiCall(
       return {
         success: false,
         statusCode: response.status,
-        error: `API Error ${response.status}: ${JSON.stringify(response.data)}`,
+        error: `API Error ${response.status}`,
         data: response.data, // Optionally include error data
       }
     }
   } catch (error) {
     const axiosError = error as AxiosError
-    console.error(`API call failed: ${axiosError.message}`, axiosError.code || 'UNKNOWN')
+    console.error('API call failed', { code: safeErrorCode(axiosError.code) })
 
     if (axiosError.code === 'ECONNABORTED') {
       const timeoutMs = requestTimeoutMs ?? config.requestTimeoutMs
@@ -363,7 +350,7 @@ export async function executeApiCall(
       return {
         success: false,
         statusCode: axiosError.response.status || 500,
-        error: `API Error ${axiosError.response.status}: ${JSON.stringify(axiosError.response.data) || axiosError.message}`,
+        error: `API Error ${axiosError.response.status || 500}`,
         data: axiosError.response.data,
       }
     } else {
@@ -371,7 +358,7 @@ export async function executeApiCall(
       return {
         success: false,
         statusCode: 503, // Service Unavailable or similar
-        error: `Network or request setup error: ${axiosError.message}`,
+        error: 'Network or request setup error',
       }
     }
   }

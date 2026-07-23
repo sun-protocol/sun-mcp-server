@@ -2,7 +2,7 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Network](https://img.shields.io/badge/Network-TRON-red)
-![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933)
+![Node.js](https://img.shields.io/badge/Node.js-20%20%7C%2022%20%7C%2024-339933)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6)
 
 An MCP server for AI-driven DeFi operations on the TRON network through the SUN.IO / SUNSWAP ecosystem.
@@ -50,12 +50,12 @@ The server supports **stdio** (local) and **Streamable HTTP** (remote) transport
 
 ### Official Hosted MCP (Read-Only)
 
-The fastest way to try SUN MCP Server — no installation, no configuration. BankOfAI hosts a public read-only instance.
+The fastest way to try SUN MCP Server — no installation, no configuration. SUN.IO hosts a public read-only instance.
 
 **Point your client to the official endpoint:**
 
 ```bash
-claude mcp add --transport http sun-mcp-server https://sun-mcp-server.bankofai.io/mcp
+claude mcp add --transport http sun-mcp-server https://mcp.sun.io/
 ```
 
 This gives you access to all read-only tools: token prices, pool data, positions, quoting, and more. No wallet is configured on the hosted instance, so write operations (swaps, liquidity) are not available.
@@ -63,7 +63,7 @@ This gives you access to all read-only tools: token prices, pool data, positions
 **curl example** — call the `getPrice` tool via MCP JSON-RPC:
 
 ```bash
-curl -X POST https://sun-mcp-server.bankofai.io/mcp \
+curl -X POST https://mcp.sun.io/ \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{
@@ -79,11 +79,10 @@ curl -X POST https://sun-mcp-server.bankofai.io/mcp \
   }'
 ```
 
-Response (SSE format):
+Response (JSON format):
 
-```
-event: message
-data: {
+```json
+{
   "result": {
     "content": [
       {
@@ -105,6 +104,9 @@ data: {
 Run the server locally with full capabilities — including write operations if you configure a wallet.
 
 **Install:**
+
+Supported runtimes are Node.js 20, 22, and 24 (`>=20 <25`). Future major versions are not
+claimed until they pass the full CI and packaged CLI handshake matrix.
 
 ```bash
 npm install -g @sun-protocol/sun-mcp-server
@@ -157,13 +159,44 @@ Environment variables passed via `-e` are injected into the server process. Clau
 
 ```bash
 # Start the server
-sun-mcp-server --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /mcp
+sun-mcp-server --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
 
 # Register it with your MCP client
-claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/mcp
+claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/
 ```
 
+Without `--config` or `CONFIG_FILE`, the CLI checks `openapi-mcp.json`, `.openapi-mcp.json`,
+and `config.json` in the working directory, in that order, before falling back to the bundled
+`config.json`. Relative spec paths are resolved from the selected configuration file, so
+`OPENAPI_SPEC_PATH` is not required for the default SUN.IO deployment. The bundled fallback
+uses `stdio`; the Docker image explicitly overrides it with `MCP_TRANSPORT=streamable-http`.
+When the configured MCP path is `/` or `/mcp`, both URLs are accepted.
+
 > For external access (e.g. from other machines or containers), bind to `0.0.0.0` instead of `127.0.0.1`.
+
+**Docker** — the production image listens on `0.0.0.0:8080` and serves MCP at both `/` and `/mcp`.
+
+```bash
+docker build -t sun-mcp-server:local .
+docker run --rm -p 8080:8080 sun-mcp-server:local
+
+claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/
+```
+
+The image includes the bundled OpenAPI specification and a protocol-level health check.
+Override `MCP_SERVER_PORT`, `MCP_SERVER_PATH`, or other runtime environment variables with
+`docker run -e ...` when required. On `SIGTERM`/`SIGINT`, the server stops accepting new
+requests and drains all in-flight read and write tool calls before exiting. Set
+`MCP_SHUTDOWN_TIMEOUT_MS` to control the force-exit deadline (default: `5000`).
+
+Tag pushes publish multi-platform images through GitHub Actions:
+
+- `test-v*` publishes the `test` image tag.
+- `v*` publishes the full Git tag, for example `v1.2.1`.
+
+Configure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as repository secrets. The default
+repository is `sun-protocol/sun-mcp-server`; set the optional `DOCKER_IMAGE` repository variable
+to publish elsewhere.
 
 ### Verify
 
@@ -229,7 +262,7 @@ Add to your MCP configuration file (`~/Library/Application Support/Claude/claude
 {
   "mcpServers": {
     "sun-mcp-server": {
-      "url": "http://127.0.0.1:8080/mcp"
+      "url": "http://127.0.0.1:8080/"
     }
   }
 }
@@ -261,7 +294,7 @@ Add to `.cursor/mcp.json` in your project root:
 {
   "mcpServers": {
     "sun-mcp-server": {
-      "url": "http://127.0.0.1:8080/mcp"
+      "url": "http://127.0.0.1:8080/"
     }
   }
 }
@@ -318,7 +351,7 @@ The server dynamically generates read-only tools from the bundled SUN.IO OpenAPI
 | | `getPoolHooks` | `GET /apiv2/pools/hooks` | Pool hooks list |
 | | `getPoolVolHistory` | `GET /apiv2/pools/history/vol` | Pool volume history |
 | | `getPoolLiqHistory` | `GET /apiv2/pools/history/liq` | Pool liquidity history |
-| Pairs | `getPairsFromEntity` | `GET /apiv2/pairs` | Token pair entity query |
+| Pairs | `getPairs` | `GET /apiv2/pairs` | Token pair entity query |
 | Farms | `getFarms` | `GET /apiv2/farms` | Farming pool list |
 | | `getFarmTransactions` | `GET /apiv2/farms/transactions` | Farm transaction scanning |
 | | `getFarmPositions` | `GET /apiv2/farms/positions/user` | User farming positions |
@@ -409,7 +442,7 @@ The higher-level SUNSwap tools automatically compute or fill in parameters so th
 
 - If tick range is omitted, defaults to ±50 × tickSpacing around the current price
 - Supports single-sided input — provide only `amount0` or `amount1`
-- Slippage tolerance defaults to 95%
+- Minimum amounts default to desired amounts × 95%, which is a 5% slippage tolerance
 
 **V4 Mint (`sunswap_v4_mint_position`):**
 

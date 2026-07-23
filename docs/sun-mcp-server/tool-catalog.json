@@ -1,0 +1,1901 @@
+{
+  "generatedFrom": [
+    "specs/sunio-open-api.json",
+    "src/tools/sunswap.ts"
+  ],
+  "openapi": [
+    {
+      "name": "scanTransactions",
+      "method": "GET",
+      "path": "/apiv2/transactions/scan",
+      "description": "Scan transactions",
+      "parameters": [
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol to filter: V1, V1_5, V2, V3, V4, CURVE, ALL"
+        },
+        {
+          "name": "tokenAddress",
+          "in": "query",
+          "required": false,
+          "description": "Token address to filter, can not be used with poolAddress"
+        },
+        {
+          "name": "poolAddress",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated pool address to filter, can not be used with tokenAddress"
+        },
+        {
+          "name": "type",
+          "in": "query",
+          "required": false,
+          "description": "Transaction type to filter: add, withdraw, swap"
+        },
+        {
+          "name": "startTime",
+          "in": "query",
+          "required": false,
+          "description": "Start time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd)"
+        },
+        {
+          "name": "endTime",
+          "in": "query",
+          "required": false,
+          "description": "End time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd)"
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "description": "Pagination offset from previous response"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getTokens",
+      "method": "GET",
+      "path": "/apiv2/tokens",
+      "description": "Fetches a list of tokens based on token address or protocol.",
+      "parameters": [
+        {
+          "name": "tokenAddress",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated token addresses"
+        },
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol: V1, V1_5, V2, V3, V4, CURVE, ALL"
+        },
+        {
+          "name": "pageNo",
+          "in": "query",
+          "required": false,
+          "description": "Page number, starting from 1",
+          "default": 1
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort field: reserveUsd, volumeUsd1d",
+          "default": "reserveUsd"
+        },
+        {
+          "name": "filterBlackList",
+          "in": "query",
+          "required": false,
+          "description": "Whether to filter out results that are in the blacklist. Set to true to exclude blacklisted tokens.",
+          "default": true
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "searchTokens",
+      "method": "GET",
+      "path": "/apiv2/tokens/search",
+      "description": "Searches tokens by a query string and protocol.",
+      "parameters": [
+        {
+          "name": "query",
+          "in": "query",
+          "required": false,
+          "description": "Search query"
+        },
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol: V1, V1_5, V2, V3, V4, CURVE, ALL",
+          "default": "ALL"
+        },
+        {
+          "name": "pageNo",
+          "in": "query",
+          "required": false,
+          "description": "Page number, starting from 1",
+          "default": 1
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort field: reserveUsd, volumeUsd1d",
+          "default": "reserveUsd"
+        },
+        {
+          "name": "filterBlackList",
+          "in": "query",
+          "required": false,
+          "description": "Whether to filter out results that are in the blacklist. Set to true to exclude blacklisted tokens.",
+          "default": true
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getProtocol",
+      "method": "GET",
+      "path": "/apiv2/protocols",
+      "description": "Fetch protocol details",
+      "parameters": [
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol: V1, V1_5, V2, V3, V4, CURVE, ALL"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getVolHistory",
+      "method": "GET",
+      "path": "/apiv2/protocols/history/vol",
+      "description": "Fetch historical protocol volume data",
+      "parameters": [
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol: V1, V1_5, V2, V3, V4, CURVE, ALL",
+          "default": "ALL"
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "description": "Start date inclusive, format: yyyy-MM-dd"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "description": "End date inclusive, format: yyyy-MM-dd"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getUsersCountHistory",
+      "method": "GET",
+      "path": "/apiv2/protocols/history/usersCount",
+      "description": "Fetch historical protocol users count data",
+      "parameters": [
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol: V1, V1_5, V2, V3, V4, CURVE, ALL",
+          "default": "ALL"
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "description": "Start date inclusive, format: yyyy-MM-dd"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "description": "End date inclusive, format: yyyy-MM-dd"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getTransactionsHistory",
+      "method": "GET",
+      "path": "/apiv2/protocols/history/transactions",
+      "description": "Fetch historical protocol transactions data",
+      "parameters": [
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol: V1, V1_5, V2, V3, V4, CURVE, ALL",
+          "default": "ALL"
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "description": "Start date inclusive, format: yyyy-MM-dd"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "description": "End date inclusive, format: yyyy-MM-dd"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getPoolsCountHistory",
+      "method": "GET",
+      "path": "/apiv2/protocols/history/poolsCount",
+      "description": "Fetch historical protocol pools count data",
+      "parameters": [
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol: V1, V1_5, V2, V3, V4, CURVE, ALL",
+          "default": "ALL"
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "description": "Start date inclusive, format: yyyy-MM-dd"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "description": "End date inclusive, format: yyyy-MM-dd"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getLiqHistory",
+      "method": "GET",
+      "path": "/apiv2/protocols/history/liq",
+      "description": "Fetch historical protocol liquidity data",
+      "parameters": [
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol: V1, V1_5, V2, V3, V4, CURVE, ALL",
+          "default": "ALL"
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "description": "Start date inclusive, format: yyyy-MM-dd"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "description": "End date inclusive, format: yyyy-MM-dd"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getPrice",
+      "method": "GET",
+      "path": "/apiv2/price",
+      "description": "Get token price",
+      "parameters": [
+        {
+          "name": "tokenAddress",
+          "in": "query",
+          "required": false,
+          "description": "Token address list, separated by comma"
+        },
+        {
+          "name": "symbol",
+          "in": "query",
+          "required": false,
+          "description": "Token symbol or address list, separated by comma"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getUserPositions",
+      "method": "GET",
+      "path": "/apiv2/positions/user",
+      "description": "Fetch user positions",
+      "parameters": [
+        {
+          "name": "userAddress",
+          "in": "query",
+          "required": false,
+          "description": "User wallet address"
+        },
+        {
+          "name": "poolAddress",
+          "in": "query",
+          "required": false,
+          "description": "Pool address to filter"
+        },
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol to filter: V1, V1_5, V2, V3, V4, CURVE, ALL"
+        },
+        {
+          "name": "query",
+          "in": "query",
+          "required": false,
+          "description": "Search keyword (fuzzy match)"
+        },
+        {
+          "name": "pageNo",
+          "in": "query",
+          "required": false,
+          "description": "Page number, starting from 1",
+          "default": 1
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort field: lpBalanceUsd, lastActiveBlockTime",
+          "default": "lpBalanceUsd"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getPoolUserPositionTick",
+      "method": "GET",
+      "path": "/apiv2/positions/tick",
+      "description": "Fetch pool all user positions tick liquidity",
+      "parameters": [
+        {
+          "name": "poolAddress",
+          "in": "query",
+          "required": true,
+          "description": "Pool address to filter"
+        },
+        {
+          "name": "pageNo",
+          "in": "query",
+          "required": false,
+          "description": "Page number, starting from 1",
+          "default": 1
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getPools",
+      "method": "GET",
+      "path": "/apiv2/pools",
+      "description": "Fetch pools by pool address, token address, or protocol",
+      "parameters": [
+        {
+          "name": "poolAddress",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated pool address to filter, can not be used with tokenAddress"
+        },
+        {
+          "name": "tokenAddress",
+          "in": "query",
+          "required": false,
+          "description": "Token address to filter, can not be used with poolAddress"
+        },
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol to filter: V1, V1_5, V2, V3, V4, CURVE, ALL"
+        },
+        {
+          "name": "pageNo",
+          "in": "query",
+          "required": false,
+          "description": "Page number, starting from 1",
+          "default": 1
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort field: reserveUsd, volumeUsd1d, feeUsd1d, totalApr",
+          "default": "reserveUsd"
+        },
+        {
+          "name": "desc",
+          "in": "query",
+          "required": false,
+          "description": "Sort order, true for descending, false for ascending",
+          "default": true
+        },
+        {
+          "name": "filterBlackList",
+          "in": "query",
+          "required": false,
+          "description": "Whether to filter out results that are in the blacklist. Set to true to exclude blacklisted pools.",
+          "default": true
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getTopApyPoolList",
+      "method": "GET",
+      "path": "/apiv2/pools/top_apy_list",
+      "description": "Retrieves a paginated list of liquidity pools with the highest Annual Percentage Yield (APY)",
+      "parameters": [
+        {
+          "name": "pageNo",
+          "in": "query",
+          "required": false,
+          "description": "Page number, starting from 1",
+          "default": 1
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "searchPools",
+      "method": "GET",
+      "path": "/apiv2/pools/search",
+      "description": "Search pools by query string",
+      "parameters": [
+        {
+          "name": "query",
+          "in": "query",
+          "required": false,
+          "description": "Search query (pool address, token address, or token name/symbol)"
+        },
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol to filter: V1, V1_5, V2, V3, V4, CURVE, ALL"
+        },
+        {
+          "name": "pageNo",
+          "in": "query",
+          "required": false,
+          "description": "Page number, starting from 1",
+          "default": 1
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort field: reserveUsd, volumeUsd1d, feeUsd1d, totalApr",
+          "default": "reserveUsd"
+        },
+        {
+          "name": "desc",
+          "in": "query",
+          "required": false,
+          "description": "Sort order, true for descending, false for ascending",
+          "default": true
+        },
+        {
+          "name": "filterBlackList",
+          "in": "query",
+          "required": false,
+          "description": "Whether to filter out results that are in the blacklist. Set to true to exclude blacklisted pools.",
+          "default": true
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "searchCountPools",
+      "method": "GET",
+      "path": "/apiv2/pools/search/count",
+      "description": "Search pools by query string",
+      "parameters": [
+        {
+          "name": "query",
+          "in": "query",
+          "required": false,
+          "description": "Search query (pool address, token address, or token name/symbol)"
+        },
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Protocol to filter: V1, V1_5, V2, V3, V4, CURVE, ALL"
+        },
+        {
+          "name": "filterBlackList",
+          "in": "query",
+          "required": false,
+          "description": "Whether to filter out results that are in the blacklist. Set to true to exclude blacklisted pools.",
+          "default": true
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getPoolHooks",
+      "method": "GET",
+      "path": "/apiv2/pools/hooks",
+      "description": "Fetches a list of pool hooks",
+      "parameters": [],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getPoolVolHistory",
+      "method": "GET",
+      "path": "/apiv2/pools/history/vol",
+      "description": "Fetch historical pool volume data",
+      "parameters": [
+        {
+          "name": "poolAddress",
+          "in": "query",
+          "required": true,
+          "description": "Pool address"
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "description": "Start date inclusive, format: yyyy-MM-dd"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "description": "End date inclusive, format: yyyy-MM-dd"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getPoolLiqHistory",
+      "method": "GET",
+      "path": "/apiv2/pools/history/liq",
+      "description": "Fetch historical pool liquidity data",
+      "parameters": [
+        {
+          "name": "poolAddress",
+          "in": "query",
+          "required": true,
+          "description": "Pool address"
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "description": "Start date inclusive, format: yyyy-MM-dd"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "description": "End date inclusive, format: yyyy-MM-dd"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getPairs",
+      "method": "GET",
+      "path": "/apiv2/pairs",
+      "description": "Fetch token pairs from pair_info table (direct entity query)",
+      "parameters": [
+        {
+          "name": "protocols",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated protocols to filter: V1, V1_5, V2, CURVE (V3 excluded)"
+        },
+        {
+          "name": "protocol",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated protocols to filter: V1, V1_5, V2, CURVE (V3 excluded)"
+        },
+        {
+          "name": "tokenAddress",
+          "in": "query",
+          "required": false,
+          "description": "Token address to filter (matches base_id or quote_id)"
+        },
+        {
+          "name": "pageNo",
+          "in": "query",
+          "required": false,
+          "description": "Page number, starting from 1",
+          "default": 1
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort field: price, updateTime, baseAmountVol1d, quoteAmountVol1d"
+        },
+        {
+          "name": "desc",
+          "in": "query",
+          "required": false,
+          "description": "Sort descending (true) or ascending (false)",
+          "default": true
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getFarms",
+      "method": "GET",
+      "path": "/apiv2/farms",
+      "description": "Get list of farming pools",
+      "parameters": [
+        {
+          "name": "farmAddress",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated farm address to filter"
+        },
+        {
+          "name": "pageNo",
+          "in": "query",
+          "required": false,
+          "description": "Page number, starting from 1",
+          "default": 1
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort field: totalLockedUsd",
+          "default": "totalLockedUsd"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getFarmTransactions",
+      "method": "GET",
+      "path": "/apiv2/farms/transactions",
+      "description": "Scan farming transactions",
+      "parameters": [
+        {
+          "name": "userAddress",
+          "in": "query",
+          "required": false,
+          "description": "User wallet address"
+        },
+        {
+          "name": "farmAddress",
+          "in": "query",
+          "required": false,
+          "description": "Farm address to filter"
+        },
+        {
+          "name": "farmTxType",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated farm transaction types to filter: STAKE, UNSTAKE, LOCK, UNLOCK, CLAIM_REWARD, CLAIM_REWARD_ACC"
+        },
+        {
+          "name": "startTime",
+          "in": "query",
+          "required": false,
+          "description": "Start time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd)"
+        },
+        {
+          "name": "endTime",
+          "in": "query",
+          "required": false,
+          "description": "End time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd)"
+        },
+        {
+          "name": "pageNo",
+          "in": "query",
+          "required": false,
+          "description": "Page number, starting from 1",
+          "default": 1
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort field: txTime",
+          "default": "txTime"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    },
+    {
+      "name": "getFarmPositions",
+      "method": "GET",
+      "path": "/apiv2/farms/positions/user",
+      "description": "Get user's farming positions",
+      "parameters": [
+        {
+          "name": "userAddress",
+          "in": "query",
+          "required": false,
+          "description": "User wallet address"
+        },
+        {
+          "name": "farmAddress",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated farm address to filter"
+        },
+        {
+          "name": "pageNo",
+          "in": "query",
+          "required": false,
+          "description": "Page number, starting from 1",
+          "default": 1
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "required": false,
+          "description": "Page size",
+          "default": 10
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort field: positionUsd",
+          "default": "positionUsd"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "specs/sunio-open-api.json"
+    }
+  ],
+  "custom": [
+    {
+      "name": "sunswap_get_wallet_address",
+      "description": "Get the active TRON wallet address for SUN.IO/SUNSWAP interactions.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_v3_collect",
+      "description": "Collect accrued fees from an existing SUNSWAP V3-style position. Before executing, estimates claimable fees via a read-only collect call.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "positionManagerAddress",
+          "required": true,
+          "description": "SUNSWAP V3 NonfungiblePositionManager contract address."
+        },
+        {
+          "name": "abi",
+          "required": false,
+          "description": "Optional position manager ABI; if omitted, TronWeb will attempt to infer it."
+        },
+        {
+          "name": "tokenId",
+          "required": true,
+          "description": "Token ID of the V3 position NFT."
+        },
+        {
+          "name": "recipient",
+          "required": false,
+          "description": "Recipient of collected fees. If omitted, defaults to the active wallet address."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_get_balances",
+      "description": "Get TRX and TRC20 balances for a wallet on TRON, useful for SUN.IO/SUNSWAP portfolio views.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "ownerAddress",
+          "required": false,
+          "description": "Wallet address; if omitted, uses the active SUNSWAP wallet."
+        },
+        {
+          "name": "tokens",
+          "required": true,
+          "description": "Assets to query. Include at least one entry, e.g. [{ type: 'TRX' }] or TRC20 tokens."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_quote_exact_input",
+      "description": "Estimate SUNSWAP smart router swap results (exact input) by calling its quote/view function.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "routerAddress",
+          "required": true,
+          "description": "Smart router contract address."
+        },
+        {
+          "name": "functionName",
+          "required": false,
+          "description": "Quote function name on the router (default: quoteExactInput). You may override if router uses a different name, e.g. getAmountsOut."
+        },
+        {
+          "name": "args",
+          "required": true,
+          "description": "Arguments passed to the router quote function, in ABI order."
+        },
+        {
+          "name": "abi",
+          "required": false,
+          "description": "Optional router ABI; if omitted, TronWeb will attempt to infer it."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_read_contract",
+      "description": "Read data from a TRON smart contract used by SUN.IO/SUNSWAP (view/pure functions only).",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "address",
+          "required": true,
+          "description": "Contract address in base58 or hex format."
+        },
+        {
+          "name": "functionName",
+          "required": true,
+          "description": "Name of the view/pure function to call."
+        },
+        {
+          "name": "args",
+          "required": false,
+          "description": "Optional array of arguments to pass to the function."
+        },
+        {
+          "name": "abi",
+          "required": false,
+          "description": "Optional contract ABI; if omitted, TronWeb will attempt to infer it."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_swap_exact_input",
+      "description": "Execute SUNSWAP smart router swapExactInput (or equivalent) using the pattern: get params -> build unsigned tx -> wallet sign -> broadcast.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "routerAddress",
+          "required": true,
+          "description": "Smart router contract address."
+        },
+        {
+          "name": "functionName",
+          "required": false,
+          "description": "Swap function name on the router (default: swapExactInput)."
+        },
+        {
+          "name": "args",
+          "required": true,
+          "description": "Arguments passed to the router swap function, in ABI order."
+        },
+        {
+          "name": "value",
+          "required": false,
+          "description": "Optional TRX amount in Sun to attach as call value."
+        },
+        {
+          "name": "abi",
+          "required": false,
+          "description": "Optional router ABI; if omitted, TronWeb will attempt to infer it."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_get_token_price",
+      "description": "Get latest token prices from SUN.IO / SUNSWAP public API using token addresses and/or symbols.",
+      "parameters": [
+        {
+          "name": "tokenAddress",
+          "required": false,
+          "description": "Comma-separated TRON token addresses, e.g. TR7N...,TXYZ..."
+        },
+        {
+          "name": "symbol",
+          "required": false,
+          "description": "Comma-separated token symbols, e.g. SUN,TRX,USDT"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_v2_add_liquidity",
+      "description": "Add liquidity to a SUNSWAP V2-style pool. If tokenA or tokenB is native TRX (T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb), addLiquidityETH is used automatically; otherwise addLiquidity(tokenA, tokenB, ...) is used.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "routerAddress",
+          "required": true,
+          "description": "SUNSWAP V2 router contract address."
+        },
+        {
+          "name": "abi",
+          "required": false,
+          "description": "Optional router ABI; if omitted, TronWeb will attempt to infer it."
+        },
+        {
+          "name": "tokenA",
+          "required": true,
+          "description": "Token A contract address."
+        },
+        {
+          "name": "tokenB",
+          "required": true,
+          "description": "Token B contract address."
+        },
+        {
+          "name": "amountADesired",
+          "required": true,
+          "description": "Desired amount of token A (raw units)."
+        },
+        {
+          "name": "amountBDesired",
+          "required": true,
+          "description": "Desired amount of token B (raw units)."
+        },
+        {
+          "name": "amountAMin",
+          "required": false,
+          "description": "Minimum amount of token A to add. If omitted, defaults to amountADesired with a 5% slippage buffer."
+        },
+        {
+          "name": "amountBMin",
+          "required": false,
+          "description": "Minimum amount of token B to add. If omitted, defaults to amountBDesired with a 5% slippage buffer."
+        },
+        {
+          "name": "to",
+          "required": false,
+          "description": "Recipient address for LP tokens. If omitted, defaults to the active wallet address."
+        },
+        {
+          "name": "deadline",
+          "required": false,
+          "description": "Unix timestamp deadline for the transaction. If omitted, defaults to now + 30 minutes."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_v2_remove_liquidity",
+      "description": "Remove liquidity from a SUNSWAP V2-style pool. If tokenA or tokenB is native TRX (T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb), removeLiquidityETH is used automatically; otherwise removeLiquidity(...) is used.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "routerAddress",
+          "required": true,
+          "description": "SUNSWAP V2 router contract address."
+        },
+        {
+          "name": "abi",
+          "required": false,
+          "description": "Optional router ABI; if omitted, TronWeb will attempt to infer it."
+        },
+        {
+          "name": "tokenA",
+          "required": true,
+          "description": "Token A underlying contract address in the V2 pool (LP token is derived automatically from the factory)."
+        },
+        {
+          "name": "tokenB",
+          "required": true,
+          "description": "Token B underlying contract address in the V2 pool (LP token is derived automatically from the factory)."
+        },
+        {
+          "name": "liquidity",
+          "required": true,
+          "description": "Amount of LP tokens to burn."
+        },
+        {
+          "name": "amountAMin",
+          "required": false,
+          "description": "Minimum amount of token A to receive. If omitted, it is computed from pool reserves based on the LP share with a 5% slippage buffer."
+        },
+        {
+          "name": "amountBMin",
+          "required": false,
+          "description": "Minimum amount of token B to receive. If omitted, it is computed from pool reserves based on the LP share with a 5% slippage buffer."
+        },
+        {
+          "name": "to",
+          "required": false,
+          "description": "Recipient of underlying tokens. If omitted, defaults to the active wallet address."
+        },
+        {
+          "name": "deadline",
+          "required": false,
+          "description": "Unix timestamp deadline for the transaction. If omitted, defaults to now + 30 minutes."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_v3_mint_position",
+      "description": "Mint a new SUNSWAP V3 concentrated liquidity position. Supports auto-compute: if fee is omitted, defaults to 3000; if tickLower/tickUpper are omitted, reads pool currentTick and sets ±50*tickSpacing; if only one of amount0Desired/amount1Desired is provided, calculates the other from V3 math.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "positionManagerAddress",
+          "required": true,
+          "description": "SUNSWAP V3 NonfungiblePositionManager contract address."
+        },
+        {
+          "name": "abi",
+          "required": false,
+          "description": "Optional position manager ABI; if omitted, TronWeb will attempt to infer it."
+        },
+        {
+          "name": "token0",
+          "required": true,
+          "description": "Token0 contract address."
+        },
+        {
+          "name": "token1",
+          "required": true,
+          "description": "Token1 contract address."
+        },
+        {
+          "name": "fee",
+          "required": false,
+          "description": "Pool fee tier (e.g. 100, 500, 3000). Defaults to 3000 if omitted."
+        },
+        {
+          "name": "tickLower",
+          "required": false,
+          "description": "Lower tick. If omitted, auto-set to currentTick - 50*tickSpacing."
+        },
+        {
+          "name": "tickUpper",
+          "required": false,
+          "description": "Upper tick. If omitted, auto-set to currentTick + 50*tickSpacing."
+        },
+        {
+          "name": "amount0Desired",
+          "required": false,
+          "description": "Desired amount of token0 (raw units). If only one side is provided, the other is auto-calculated."
+        },
+        {
+          "name": "amount1Desired",
+          "required": false,
+          "description": "Desired amount of token1 (raw units). If only one side is provided, the other is auto-calculated."
+        },
+        {
+          "name": "amount0Min",
+          "required": false,
+          "description": "Minimum amount of token0. Defaults to amount0Desired * 95%."
+        },
+        {
+          "name": "amount1Min",
+          "required": false,
+          "description": "Minimum amount of token1. Defaults to amount1Desired * 95%."
+        },
+        {
+          "name": "recipient",
+          "required": false,
+          "description": "Recipient of the position NFT. Defaults to active wallet."
+        },
+        {
+          "name": "deadline",
+          "required": false,
+          "description": "Unix timestamp deadline. Defaults to now + 30 minutes."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_v3_increase_liquidity",
+      "description": "Increase liquidity of an existing SUNSWAP V3 position. If only one of amount0Desired/amount1Desired is provided along with token0/token1/fee, the other is auto-calculated. amountMin defaults to 5% slippage; deadline defaults to now + 30 min.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "positionManagerAddress",
+          "required": true,
+          "description": "SUNSWAP V3 NonfungiblePositionManager contract address."
+        },
+        {
+          "name": "abi",
+          "required": false,
+          "description": "Optional position manager ABI."
+        },
+        {
+          "name": "tokenId",
+          "required": true,
+          "description": "Token ID of the V3 position NFT."
+        },
+        {
+          "name": "token0",
+          "required": false,
+          "description": "Token0 address. Required for single-sided auto-compute and approval."
+        },
+        {
+          "name": "token1",
+          "required": false,
+          "description": "Token1 address. Required for single-sided auto-compute and approval."
+        },
+        {
+          "name": "fee",
+          "required": false,
+          "description": "Pool fee tier for pool lookup. Defaults to 3000."
+        },
+        {
+          "name": "tickLower",
+          "required": false,
+          "description": "Lower tick override. If omitted, reads from the existing on-chain position."
+        },
+        {
+          "name": "tickUpper",
+          "required": false,
+          "description": "Upper tick override. If omitted, reads from the existing on-chain position."
+        },
+        {
+          "name": "amount0Desired",
+          "required": false,
+          "description": "Desired additional amount of token0. Auto-computed if only amount1Desired is given."
+        },
+        {
+          "name": "amount1Desired",
+          "required": false,
+          "description": "Desired additional amount of token1. Auto-computed if only amount0Desired is given."
+        },
+        {
+          "name": "amount0Min",
+          "required": false,
+          "description": "Minimum additional token0. Defaults to amount0Desired * 95%."
+        },
+        {
+          "name": "amount1Min",
+          "required": false,
+          "description": "Minimum additional token1. Defaults to amount1Desired * 95%."
+        },
+        {
+          "name": "deadline",
+          "required": false,
+          "description": "Unix timestamp deadline. Defaults to now + 30 minutes."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_v3_decrease_liquidity",
+      "description": "Decrease liquidity of an existing SUNSWAP V3 position. If token0/token1/fee are provided, amount0Min/amount1Min are auto-calculated from V3 math with 5% slippage. deadline defaults to now + 30 min.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "positionManagerAddress",
+          "required": true,
+          "description": "SUNSWAP V3 NonfungiblePositionManager contract address."
+        },
+        {
+          "name": "abi",
+          "required": false,
+          "description": "Optional position manager ABI."
+        },
+        {
+          "name": "tokenId",
+          "required": true,
+          "description": "Token ID of the V3 position NFT."
+        },
+        {
+          "name": "liquidity",
+          "required": true,
+          "description": "Amount of liquidity to burn."
+        },
+        {
+          "name": "token0",
+          "required": false,
+          "description": "Token0 address. Providing token0/token1/fee enables auto amountMin computation."
+        },
+        {
+          "name": "token1",
+          "required": false,
+          "description": "Token1 address."
+        },
+        {
+          "name": "fee",
+          "required": false,
+          "description": "Pool fee tier for pool lookup. Defaults to 3000."
+        },
+        {
+          "name": "amount0Min",
+          "required": false,
+          "description": "Minimum token0 to receive. Auto-calculated with 5% slippage if omitted."
+        },
+        {
+          "name": "amount1Min",
+          "required": false,
+          "description": "Minimum token1 to receive. Auto-calculated with 5% slippage if omitted."
+        },
+        {
+          "name": "deadline",
+          "required": false,
+          "description": "Unix timestamp deadline. Defaults to now + 30 minutes."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_send_contract",
+      "description": "Send a state-changing TRON contract transaction for SUN.IO/SUNSWAP, following the pattern: get params -> build unsigned tx -> wallet sign -> broadcast.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "address",
+          "required": true,
+          "description": "Contract address in base58 or hex format."
+        },
+        {
+          "name": "functionName",
+          "required": true,
+          "description": "Name of the state-changing contract function to call (e.g. swap, addLiquidity)."
+        },
+        {
+          "name": "args",
+          "required": false,
+          "description": "Optional array of arguments to pass to the function."
+        },
+        {
+          "name": "value",
+          "required": false,
+          "description": "Optional TRX amount in Sun to attach as call value."
+        },
+        {
+          "name": "abi",
+          "required": false,
+          "description": "Optional contract ABI; if omitted, TronWeb will attempt to infer it."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_v4_mint_position",
+      "description": "Mint a new SUNSWAP V4 concentrated liquidity position. Uses Permit2 for token authorization. If pool doesn't exist, provide sqrtPriceX96 to auto-create. Supports auto-compute: if tickLower/tickUpper are omitted, defaults to ±100*tickSpacing from current tick; if only one amount is provided, calculates the other.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet or nile (default: mainnet)"
+        },
+        {
+          "name": "token0",
+          "required": true,
+          "description": "Token0 contract address (base58)."
+        },
+        {
+          "name": "token1",
+          "required": true,
+          "description": "Token1 contract address (base58)."
+        },
+        {
+          "name": "fee",
+          "required": false,
+          "description": "Pool fee tier (100, 500, 3000, 10000). Defaults to 500."
+        },
+        {
+          "name": "tickLower",
+          "required": false,
+          "description": "Lower tick. If omitted, auto-set to currentTick - 100*tickSpacing."
+        },
+        {
+          "name": "tickUpper",
+          "required": false,
+          "description": "Upper tick. If omitted, auto-set to currentTick + 100*tickSpacing."
+        },
+        {
+          "name": "amount0Desired",
+          "required": false,
+          "description": "Desired amount of token0 (raw units). Auto-computed if only amount1 given."
+        },
+        {
+          "name": "amount1Desired",
+          "required": false,
+          "description": "Desired amount of token1 (raw units). Auto-computed if only amount0 given."
+        },
+        {
+          "name": "slippage",
+          "required": false,
+          "description": "Slippage tolerance (e.g. 0.005 for 0.5%). Defaults to 0.05 (5%)."
+        },
+        {
+          "name": "recipient",
+          "required": false,
+          "description": "Recipient of the position NFT. Defaults to active wallet."
+        },
+        {
+          "name": "deadline",
+          "required": false,
+          "description": "Unix timestamp deadline. Defaults to now + 30 minutes."
+        },
+        {
+          "name": "sqrtPriceX96",
+          "required": false,
+          "description": "Initial sqrtPriceX96 for pool creation. Required if pool doesn't exist."
+        },
+        {
+          "name": "createPoolIfNeeded",
+          "required": false,
+          "description": "If true, auto-create pool if it doesn't exist (requires sqrtPriceX96)."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_v4_increase_liquidity",
+      "description": "Increase liquidity of an existing SUNSWAP V4 position. Uses Permit2 for token authorization. Requires token0/token1 for proper authorization. If only one amount is provided, calculates the other from position tick range.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet or nile (default: mainnet)"
+        },
+        {
+          "name": "tokenId",
+          "required": true,
+          "description": "Token ID of the V4 position NFT."
+        },
+        {
+          "name": "token0",
+          "required": true,
+          "description": "Token0 contract address (base58). Required for authorization."
+        },
+        {
+          "name": "token1",
+          "required": true,
+          "description": "Token1 contract address (base58). Required for authorization."
+        },
+        {
+          "name": "fee",
+          "required": false,
+          "description": "Pool fee tier for lookup. Defaults to 500."
+        },
+        {
+          "name": "amount0Desired",
+          "required": false,
+          "description": "Desired additional amount of token0 (raw units)."
+        },
+        {
+          "name": "amount1Desired",
+          "required": false,
+          "description": "Desired additional amount of token1 (raw units)."
+        },
+        {
+          "name": "slippage",
+          "required": false,
+          "description": "Slippage tolerance (e.g. 0.005 for 0.5%). Defaults to 0.05 (5%)."
+        },
+        {
+          "name": "deadline",
+          "required": false,
+          "description": "Unix timestamp deadline. Defaults to now + 30 minutes."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_v4_decrease_liquidity",
+      "description": "Decrease liquidity of an existing SUNSWAP V4 position. Withdrawn tokens are sent to the caller via CLOSE_CURRENCY action.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet or nile (default: mainnet)"
+        },
+        {
+          "name": "tokenId",
+          "required": true,
+          "description": "Token ID of the V4 position NFT."
+        },
+        {
+          "name": "liquidity",
+          "required": true,
+          "description": "Amount of liquidity to burn (raw units)."
+        },
+        {
+          "name": "token0",
+          "required": true,
+          "description": "Token0 contract address (base58). Required for pool lookup."
+        },
+        {
+          "name": "token1",
+          "required": true,
+          "description": "Token1 contract address (base58). Required for pool lookup."
+        },
+        {
+          "name": "fee",
+          "required": false,
+          "description": "Pool fee tier for lookup. Defaults to 500."
+        },
+        {
+          "name": "amount0Min",
+          "required": false,
+          "description": "Minimum token0 to receive. Defaults to 0 with slippage applied."
+        },
+        {
+          "name": "amount1Min",
+          "required": false,
+          "description": "Minimum token1 to receive. Defaults to 0 with slippage applied."
+        },
+        {
+          "name": "slippage",
+          "required": false,
+          "description": "Slippage tolerance (e.g. 0.005 for 0.5%). Defaults to 0.05 (5%)."
+        },
+        {
+          "name": "deadline",
+          "required": false,
+          "description": "Unix timestamp deadline. Defaults to now + 30 minutes."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_v4_collect",
+      "description": "Collect accrued fees from an existing SUNSWAP V4 position. Uses CLOSE_CURRENCY to collect all accumulated fees.",
+      "parameters": [
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet or nile (default: mainnet)"
+        },
+        {
+          "name": "tokenId",
+          "required": true,
+          "description": "Token ID of the V4 position NFT."
+        },
+        {
+          "name": "token0",
+          "required": false,
+          "description": "Token0 contract address (base58). Optional, can be read from position."
+        },
+        {
+          "name": "token1",
+          "required": false,
+          "description": "Token1 contract address (base58). Optional, can be read from position."
+        },
+        {
+          "name": "fee",
+          "required": false,
+          "description": "Pool fee tier. Optional, can be read from position."
+        },
+        {
+          "name": "deadline",
+          "required": false,
+          "description": "Unix timestamp deadline. Defaults to now + 30 minutes."
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "source": "src/tools/sunswap.ts"
+    },
+    {
+      "name": "sunswap_swap",
+      "description": "Execute a token swap on SUN.IO via the Universal Router. Automatically finds the best route, handles Permit2 approval/signing, and broadcasts the transaction. Only requires tokenIn, tokenOut, and amountIn.",
+      "parameters": [
+        {
+          "name": "tokenIn",
+          "required": true,
+          "description": "Input token contract address (base58). Use TRX address for native TRX."
+        },
+        {
+          "name": "tokenOut",
+          "required": true,
+          "description": "Output token contract address (base58)."
+        },
+        {
+          "name": "amountIn",
+          "required": true,
+          "description": "Amount of input token in raw units (e.g. '1000000' for 1 USDT with 6 decimals)."
+        },
+        {
+          "name": "network",
+          "required": false,
+          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
+        },
+        {
+          "name": "slippage",
+          "required": false,
+          "description": "Slippage tolerance as a decimal (e.g. 0.005 for 0.5%). Default: 0.005"
+        }
+      ],
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "source": "src/tools/sunswap.ts"
+    }
+  ]
+}

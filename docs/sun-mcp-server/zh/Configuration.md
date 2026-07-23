@@ -7,6 +7,17 @@
 - Spec: `./specs/sunio-open-api.json`
 - 目标 URL: `https://open.sun.io`
 
+### 配置文件优先级
+
+1. `--config <path>`
+2. `CONFIG_FILE=<path>`
+3. 当前工作目录下的 `openapi-mcp.json`
+4. 当前工作目录下的 `.openapi-mcp.json`
+5. 当前工作目录下的 `config.json`
+6. 包内置 `config.json` 兜底配置
+
+OpenAPI 规范和 overlay 的相对路径以最终选中的配置文件所在目录为基准解析。
+
 ### 环境变量
 
 | 变量 | 说明 | 默认值 |
@@ -16,11 +27,17 @@
 | `MCP_TRANSPORT` | 传输方式: `stdio` 或 `streamable-http` | `stdio` |
 | `MCP_SERVER_HOST` | HTTP 服务器地址 | `127.0.0.1` |
 | `MCP_SERVER_PORT` | HTTP 服务器端口 | `8080` |
-| `MCP_SERVER_PATH` | HTTP MCP 端点路径 | `/mcp` |
+| `MCP_SERVER_PATH` | HTTP MCP 主路径；`/` 与 `/mcp` 互为兼容别名 | `/` |
+| `MCP_CORS_ORIGINS` | 浏览器允许来源，逗号分隔；留空表示拒绝浏览器跨域访问 | （禁用） |
+| `MCP_SHUTDOWN_TIMEOUT_MS` | 强制退出前的优雅关闭期限（毫秒） | `5000` |
 | `MCP_WHITELIST_OPERATIONS` | 允许的操作（逗号分隔） | （全部） |
 | `MCP_BLACKLIST_OPERATIONS` | 屏蔽的操作（逗号分隔） | （无） |
 | `CUSTOM_HEADERS` | 自定义请求头（JSON 格式） | |
 | `TARGET_API_TIMEOUT_MS` | API 请求超时（毫秒） | |
+
+浏览器预检允许 MCP 协议请求头及 `Authorization`，未知请求头会被拒绝。服务不支持
+Cookie credential，也不会返回 `Access-Control-Allow-Credentials`；浏览器认证部署应使用
+精确 Origin 白名单。
 
 ## TRON 钱包配置
 
@@ -42,7 +59,9 @@
 
 ## SUNSWAP 合约地址
 
-服务器内置了默认合约地址，位于 `src/sunswap/constants.ts`：
+运行时网络配置和默认地址由 `@sun-protocol/sun-kit` 维护，并通过
+`src/tools/sunswap.ts` 中的 `SunKit` 调用。实际安装的 SDK 版本是唯一事实源；下表仅作部署核对，
+不是第二套运行时配置。
 
 ### V2
 
