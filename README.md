@@ -482,3 +482,5 @@ Verify `MCP_SERVER_HOST`, `MCP_SERVER_PORT`, and `MCP_SERVER_PATH` match what yo
 - If you use `AGENT_WALLET_PASSWORD`, keep `AGENT_WALLET_DIR` on encrypted storage where possible.
 - Review any custom RPC endpoint before use. A malicious or misconfigured RPC can degrade reliability or leak metadata.
 - Log carefully. Avoid writing secrets, raw signed payloads, or sensitive wallet paths to logs.
+
+<!-- Minor formatting fix -->
