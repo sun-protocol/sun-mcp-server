@@ -195,7 +195,7 @@ Tag pushes publish multi-platform images through GitHub Actions:
 - `v*` publishes the full Git tag, for example `v1.2.1`.
 
 Configure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as repository secrets. The default
-repository is `sun-protocol/sun-mcp-server`; set the optional `DOCKER_IMAGE` repository variable
+repository is `sunprotocolhub/sun-mcp-server`; set the optional `DOCKER_IMAGE` repository variable
 to publish elsewhere.
 
 ### Verify
