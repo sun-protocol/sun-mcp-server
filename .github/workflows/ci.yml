@@ -53,7 +53,7 @@ jobs:
     permissions:
       contents: read
     env:
-      DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE || 'sun-protocol/sun-mcp-server' }}
+      DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE || 'sunprotocolhub/sun-mcp-server' }}
       IMAGE_TAG: ${{ startsWith(github.ref_name, 'test-v') && 'test' || github.ref_name }}
 
     steps:
