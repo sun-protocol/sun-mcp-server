@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:20-bookworm-slim AS dependencies
+FROM node:24.22.1-bookworm-slim@sha256:1681862882da07ee5476fee047bcf34138833f1df42633bb25bcb0f438d5bf3d AS dependencies
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY scripts ./scripts
 
 RUN npm run build
 
-FROM node:20-bookworm-slim AS production
+FROM node:24.22.1-bookworm-slim@sha256:1681862882da07ee5476fee047bcf34138833f1df42633bb25bcb0f438d5bf3d AS production
 
 ENV NODE_ENV=production \
     MCP_TRANSPORT=streamable-http \

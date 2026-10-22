@@ -22,9 +22,12 @@ function run(command, args, options = {}) {
 }
 
 try {
-  const packResult = JSON.parse(
+  const packOutput = JSON.parse(
     run('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', temporaryRoot]),
-  )[0]
+  )
+  const packResults = Array.isArray(packOutput) ? packOutput : Object.values(packOutput)
+  const [packResult] = packResults
+  assert(packResult, 'npm pack returned no package metadata')
   const packagedFiles = packResult.files.map((file) => file.path)
 
   assert(packagedFiles.includes('dist/index.js'), 'package is missing dist/index.js')
