@@ -2,11 +2,11 @@
 
 ## 前置要求
 
-- [Node.js](https://nodejs.org/) 20、22 或 24（`>=20 <25`）
+- [Node.js](https://nodejs.org/) 22.23.4+ 或 24.22.1+
 - npm
 
 未来 Node.js 大版本在加入 CI 构建、测试及发布包 CLI 握手矩阵前均不属于支持范围。
-Docker 镜像使用受支持的 Node.js 20 基线。
+Docker 镜像固定使用 Node.js 24.22.1，包含 2026 年 10 月安全修复。
 
 ## 安装步骤
 

@@ -3,7 +3,7 @@
   "version": "1.2.2",
   "description": "An MCP server for the SUN.IO (SUNSWAP) ecosystem",
   "engines": {
-    "node": ">=20 <25"
+    "node": ">=22.23.4 <23 || >=24.22.1 <25"
   },
   "main": "./dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,6 +28,8 @@
     "dev": "nodemon --watch src --ext ts --exec ts-node src/cli.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "security:node-baseline": "node scripts/check-node-security-baseline.cjs",
+    "security:node-runtime": "node scripts/check-node-security-baseline.cjs --runtime",
     "docs:tools": "node scripts/generate-tool-catalog.cjs",
     "docs:check": "node scripts/generate-tool-catalog.cjs --check",
     "test": "jest",
