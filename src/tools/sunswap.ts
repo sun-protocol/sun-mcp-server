@@ -8,6 +8,14 @@ export interface SunswapToolsDeps {
   kit: SunKit
 }
 
+function serializeContractResult(result: unknown): string {
+  return JSON.stringify(
+    { result },
+    (_key, value: unknown) => (typeof value === 'bigint' ? value.toString() : value),
+    2,
+  )
+}
+
 export function registerSunswapTools(registerTool: RegisterToolFn, deps: SunswapToolsDeps): void {
   const { api, kit } = deps
 
@@ -252,7 +260,7 @@ export function registerSunswapTools(registerTool: RegisterToolFn, deps: Sunswap
           content: [
             {
               type: 'text',
-              text: JSON.stringify({ result }, null, 2),
+              text: serializeContractResult(result),
             },
           ],
         }
@@ -321,7 +329,7 @@ export function registerSunswapTools(registerTool: RegisterToolFn, deps: Sunswap
           content: [
             {
               type: 'text',
-              text: JSON.stringify({ result }, null, 2),
+              text: serializeContractResult(result),
             },
           ],
         }
