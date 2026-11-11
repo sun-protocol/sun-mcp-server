@@ -4,7 +4,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import YAML from 'js-yaml'
 import { config } from './config'
-import { isHttpUrl, fetchFromUrl, fetchFromUrlWithMetadata } from './utils/httpClient'
+import { isHttpUrl, fetchFromUrl } from './utils/httpClient'
 import type { SpecConfig } from './config'
 import { safeUrlForLogging } from './utils/logging'
 
@@ -71,36 +71,19 @@ async function loadSpec(filePath: string): Promise<any> {
     if (isHttpUrl(filePath)) {
       console.error(`Detected HTTP URL for spec: ${safeFilePath}`)
       // Use our custom HTTP client instead of letting SwaggerParser handle URLs
-      const { content, finalUrl } = await fetchFromUrlWithMetadata(filePath)
-      const finalPathname = new URL(finalUrl).pathname.toLowerCase()
+      const content = await fetchFromUrl(filePath)
       // Parse the content based on file extension
-      if (finalPathname.endsWith('.yaml') || finalPathname.endsWith('.yml')) {
+      if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
         api = YAML.load(content)
       } else {
         api = JSON.parse(content)
       }
 
-      // Resolve remote references through the same guarded HTTP client as the root document.
-      // File resolution is disabled so a remote spec cannot read from the server filesystem.
-      api = await SwaggerParser.dereference(finalUrl, api, {
-        resolve: {
-          file: false,
-          http: {
-            order: 1,
-            canRead: (file) => isHttpUrl(file.url),
-            read: async (file) => {
-              const result = await fetchFromUrlWithMetadata(file.url)
-              if (result.finalUrl !== file.url) {
-                throw new Error(`Redirects are not allowed for external $ref: ${file.url}`)
-              }
-              return Buffer.from(result.content, 'utf8')
-            },
-          },
-        },
-      })
+      // Manually resolve any references
+      api = await SwaggerParser.dereference(api)
     } else {
-      // Local roots may resolve local files, but cannot cross into the remote resolver chain.
-      api = await SwaggerParser.dereference(filePath, { resolve: { http: false } })
+      // Use SwaggerParser for local files
+      api = await SwaggerParser.dereference(filePath)
     }
 
     console.error(
