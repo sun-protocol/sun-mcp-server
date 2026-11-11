@@ -22,17 +22,14 @@ jest.mock('@scure/bip32', () => ({
   HDKey: class HDKeyMock {},
 }))
 
-jest.mock(
-  '@bankofai/agent-wallet',
-  () => ({
-    resolveWalletProvider: jest.fn(() => ({})),
-    SecureKVStore: class SecureKVStoreMock {},
-    TronWallet: class TronWalletMock {},
-    loadConfig: jest.fn(() => ({ wallets: {} })),
-    saveConfig: jest.fn(),
-  }),
-  { virtual: true },
-)
+// Keep the installed package's module ID consistent across test files.
+jest.mock('@bankofai/agent-wallet', () => ({
+  resolveWalletProvider: jest.fn(() => ({})),
+  SecureKVStore: class SecureKVStoreMock {},
+  TronWallet: class TronWalletMock {},
+  loadConfig: jest.fn(() => ({ wallets: {} })),
+  saveConfig: jest.fn(),
+}))
 
 jest.mock('@sun-protocol/universal-router-sdk', () => ({
   TradePlanner: class {
