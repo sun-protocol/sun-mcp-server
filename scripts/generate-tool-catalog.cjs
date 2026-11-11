@@ -135,7 +135,7 @@ function parseCustomTools() {
   }
 
   visit(sourceFile)
-  assert.equal(tools.length, 18, 'expected exactly 18 custom SUNSWAP tools')
+  assert.equal(tools.length, 16, 'expected exactly 16 custom SUNSWAP tools')
   assert.equal(new Set(tools.map((tool) => tool.name)).size, tools.length, 'duplicate custom tool')
   return tools
 }
@@ -191,7 +191,7 @@ function parseOpenApiTools() {
     }
   }
 
-  assert.equal(tools.length, 23, 'expected exactly 23 OpenAPI tools')
+  assert.equal(tools.length, 20, 'expected exactly 20 OpenAPI tools')
   assert.equal(new Set(tools.map((tool) => tool.name)).size, tools.length, 'duplicate operationId')
   return tools
 }

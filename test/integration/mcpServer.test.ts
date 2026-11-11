@@ -50,14 +50,14 @@ describe('SUN.IO MCP Server Integration Tests', () => {
       filter: testSpecConfig.filter,
     })
 
-    expect(tools.length).toBeGreaterThan(20)
+    expect(tools).toHaveLength(20)
     const toolNames = tools.map((t) => t.mcpToolDefinition.name)
     expect(toolNames).toContain('getPrice')
     expect(toolNames).toContain('getPools')
   })
 
   it('registers tools with MCP server', async () => {
-    expect(mappedTools.length).toBeGreaterThan(20)
+    expect(mappedTools).toHaveLength(20)
 
     for (const toolName of registeredToolNames.slice(0, 3)) {
       const result = await invokeToolForTest(transport, toolName, {})

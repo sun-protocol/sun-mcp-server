@@ -30,7 +30,6 @@ An MCP server for AI-driven DeFi operations on the TRON network through the SUN.
   - [V2 Liquidity](#v2-liquidity)
   - [V3 Liquidity](#v3-liquidity)
   - [V4 Liquidity](#v4-liquidity)
-  - [Generic Contract](#generic-contract)
   - [Auto-Compute Features](#auto-compute-features)
 - [Troubleshooting](#troubleshooting)
 - [Security Considerations](#security-considerations)
@@ -322,7 +321,6 @@ If you are deploying the server for shared or production use, consider adding:
 | [V2 Liquidity](#v2-liquidity) | `v2_add_liquidity`, `v2_remove_liquidity` | Yes | Classic LP add/remove |
 | [V3 Liquidity](#v3-liquidity) | `v3_mint_position`, `v3_increase_liquidity`, `v3_decrease_liquidity`, `v3_collect` | Yes | Concentrated liquidity positions |
 | [V4 Liquidity](#v4-liquidity) | `v4_mint_position`, `v4_increase_liquidity`, `v4_decrease_liquidity`, `v4_collect` | Yes | V4 position management and fee collection |
-| [Generic Contract](#generic-contract) | `read_contract`, `send_contract` | Read: No / Send: Yes | Direct TRON contract interaction |
 
 > All custom tool names are prefixed with `sunswap_` (e.g. `sunswap_swap`, `sunswap_v3_mint_position`).
 
@@ -334,14 +332,12 @@ The server dynamically generates read-only tools from the bundled SUN.IO OpenAPI
 
 | Domain | Tool | Endpoint | Description |
 |--------|------|----------|-------------|
-| Transactions | `scanTransactions` | `GET /apiv2/transactions/scan` | Scan swap/add/withdraw activity with pagination |
 | Tokens | `getTokens` | `GET /apiv2/tokens` | Fetch tokens by address and protocol |
 | | `searchTokens` | `GET /apiv2/tokens/search` | Fuzzy token search by keyword |
 | Protocols | `getProtocol` | `GET /apiv2/protocols` | Protocol snapshot data |
 | | `getVolHistory` | `GET /apiv2/protocols/history/vol` | Protocol volume history |
 | | `getLiqHistory` | `GET /apiv2/protocols/history/liq` | Protocol liquidity history |
 | | `getUsersCountHistory` | `GET /apiv2/protocols/history/usersCount` | Protocol users history |
-| | `getTransactionsHistory` | `GET /apiv2/protocols/history/transactions` | Protocol transaction count history |
 | | `getPoolsCountHistory` | `GET /apiv2/protocols/history/poolsCount` | Protocol pool count history |
 | Prices | `getPrice` | `GET /apiv2/price` | Token price by address |
 | Positions | `getUserPositions` | `GET /apiv2/positions/user` | User liquidity positions |
@@ -355,7 +351,6 @@ The server dynamically generates read-only tools from the bundled SUN.IO OpenAPI
 | | `getPoolLiqHistory` | `GET /apiv2/pools/history/liq` | Pool liquidity history |
 | Pairs | `getPairs` | `GET /apiv2/pairs` | Token pair entity query |
 | Farms | `getFarms` | `GET /apiv2/farms` | Farming pool list |
-| | `getFarmTransactions` | `GET /apiv2/farms/transactions` | Farm transaction scanning |
 | | `getFarmPositions` | `GET /apiv2/farms/positions/user` | User farming positions |
 
 > The exact set of tools depends on the loaded OpenAPI spec and any configured whitelist/blacklist filters.
@@ -420,15 +415,6 @@ Key tools:
 - `sunswap_v4_collect`
 
 These tools support SUNSwap V4-style position management and fee collection.
-
-### Generic Contract
-
-Key tools:
-
-- `sunswap_read_contract`
-- `sunswap_send_contract`
-
-Use these when you need direct TRON contract interaction outside the higher-level abstractions.
 
 ### Auto-Compute Features
 

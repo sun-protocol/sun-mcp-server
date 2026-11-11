@@ -20,17 +20,14 @@ jest.mock('@scure/bip32', () => ({
   HDKey: class HDKeyMock {},
 }))
 
-jest.mock(
-  '@bankofai/agent-wallet',
-  () => ({
-    resolveWalletProvider: jest.fn(() => ({})),
-    SecureKVStore: class SecureKVStoreMock {},
-    TronWallet: class TronWalletMock {},
-    loadConfig: jest.fn(() => ({ wallets: {} })),
-    saveConfig: jest.fn(),
-  }),
-  { virtual: true },
-)
+// Keep the installed package's module ID consistent across test files.
+jest.mock('@bankofai/agent-wallet', () => ({
+  resolveWalletProvider: jest.fn(() => ({})),
+  SecureKVStore: class SecureKVStoreMock {},
+  TronWallet: class TronWalletMock {},
+  loadConfig: jest.fn(() => ({ wallets: {} })),
+  saveConfig: jest.fn(),
+}))
 
 jest.mock('@sun-protocol/universal-router-sdk', () => {
   class TradePlannerMock {
@@ -79,7 +76,6 @@ describe('sunswap tool registration', () => {
       'sunswap_v3_collect',
       'sunswap_get_balances',
       'sunswap_quote_exact_input',
-      'sunswap_read_contract',
       'sunswap_swap_exact_input',
       'sunswap_get_token_price',
       'sunswap_v2_add_liquidity',
@@ -87,7 +83,6 @@ describe('sunswap tool registration', () => {
       'sunswap_v3_mint_position',
       'sunswap_v3_increase_liquidity',
       'sunswap_v3_decrease_liquidity',
-      'sunswap_send_contract',
       'sunswap_v4_mint_position',
       'sunswap_v4_increase_liquidity',
       'sunswap_v4_decrease_liquidity',
@@ -95,6 +90,7 @@ describe('sunswap tool registration', () => {
       'sunswap_swap',
     ]
 
+    expect(names).toHaveLength(expected.length)
     for (const name of expected) {
       expect(names).toContain(name)
     }

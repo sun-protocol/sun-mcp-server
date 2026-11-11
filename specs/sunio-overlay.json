@@ -45,24 +45,6 @@
         "summary": "Get SUNSWAP token prices",
         "description": "Get latest token prices on SUN.IO (SUNSWAP). Supports batch lookup by comma-separated token symbols or addresses."
       }
-    },
-    {
-      "target": "$.paths['/apiv2/farms/transactions'].get.parameters[?(@.name=='farmTxType')]",
-      "update": {
-        "description": "Farming transaction type filter on SUNSWAP/SUN.IO.",
-        "schema": {
-          "type": "string",
-          "enum": ["STAKE", "UNSTAKE", "LOCK", "UNLOCK", "CLAIM_REWARD", "CLAIM_REWARD_ACC"],
-          "example": "STAKE,CLAIM_REWARD"
-        }
-      }
-    },
-    {
-      "target": "$.paths['/apiv2/farms/transactions'].get",
-      "update": {
-        "summary": "Get SUNSWAP farm transaction history",
-        "description": "Fetch SUN.IO (SUNSWAP) farming transaction history including stake/unstake/lock/unlock/claim actions."
-      }
     }
   ]
 }

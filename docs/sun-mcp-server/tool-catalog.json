@@ -5,70 +5,6 @@
   ],
   "openapi": [
     {
-      "name": "scanTransactions",
-      "method": "GET",
-      "path": "/apiv2/transactions/scan",
-      "description": "Scan transactions",
-      "parameters": [
-        {
-          "name": "protocol",
-          "in": "query",
-          "required": false,
-          "description": "Protocol to filter: V1, V1_5, V2, V3, V4, CURVE, ALL"
-        },
-        {
-          "name": "tokenAddress",
-          "in": "query",
-          "required": false,
-          "description": "Token address to filter, can not be used with poolAddress"
-        },
-        {
-          "name": "poolAddress",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated pool address to filter, can not be used with tokenAddress"
-        },
-        {
-          "name": "type",
-          "in": "query",
-          "required": false,
-          "description": "Transaction type to filter: add, withdraw, swap"
-        },
-        {
-          "name": "startTime",
-          "in": "query",
-          "required": false,
-          "description": "Start time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd)"
-        },
-        {
-          "name": "endTime",
-          "in": "query",
-          "required": false,
-          "description": "End time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd)"
-        },
-        {
-          "name": "pageSize",
-          "in": "query",
-          "required": false,
-          "description": "Page size",
-          "default": 10
-        },
-        {
-          "name": "offset",
-          "in": "query",
-          "required": false,
-          "description": "Pagination offset from previous response"
-        }
-      ],
-      "annotations": {
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "idempotentHint": true,
-        "openWorldHint": true
-      },
-      "source": "specs/sunio-open-api.json"
-    },
-    {
       "name": "getTokens",
       "method": "GET",
       "path": "/apiv2/tokens",
@@ -239,40 +175,6 @@
       "method": "GET",
       "path": "/apiv2/protocols/history/usersCount",
       "description": "Fetch historical protocol users count data",
-      "parameters": [
-        {
-          "name": "protocol",
-          "in": "query",
-          "required": false,
-          "description": "Protocol: V1, V1_5, V2, V3, V4, CURVE, ALL",
-          "default": "ALL"
-        },
-        {
-          "name": "startDate",
-          "in": "query",
-          "required": false,
-          "description": "Start date inclusive, format: yyyy-MM-dd"
-        },
-        {
-          "name": "endDate",
-          "in": "query",
-          "required": false,
-          "description": "End date inclusive, format: yyyy-MM-dd"
-        }
-      ],
-      "annotations": {
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "idempotentHint": true,
-        "openWorldHint": true
-      },
-      "source": "specs/sunio-open-api.json"
-    },
-    {
-      "name": "getTransactionsHistory",
-      "method": "GET",
-      "path": "/apiv2/protocols/history/transactions",
-      "description": "Fetch historical protocol transactions data",
       "parameters": [
         {
           "name": "protocol",
@@ -868,72 +770,6 @@
       "source": "specs/sunio-open-api.json"
     },
     {
-      "name": "getFarmTransactions",
-      "method": "GET",
-      "path": "/apiv2/farms/transactions",
-      "description": "Scan farming transactions",
-      "parameters": [
-        {
-          "name": "userAddress",
-          "in": "query",
-          "required": false,
-          "description": "User wallet address"
-        },
-        {
-          "name": "farmAddress",
-          "in": "query",
-          "required": false,
-          "description": "Farm address to filter"
-        },
-        {
-          "name": "farmTxType",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated farm transaction types to filter: STAKE, UNSTAKE, LOCK, UNLOCK, CLAIM_REWARD, CLAIM_REWARD_ACC"
-        },
-        {
-          "name": "startTime",
-          "in": "query",
-          "required": false,
-          "description": "Start time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd)"
-        },
-        {
-          "name": "endTime",
-          "in": "query",
-          "required": false,
-          "description": "End time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd)"
-        },
-        {
-          "name": "pageNo",
-          "in": "query",
-          "required": false,
-          "description": "Page number, starting from 1",
-          "default": 1
-        },
-        {
-          "name": "pageSize",
-          "in": "query",
-          "required": false,
-          "description": "Page size",
-          "default": 10
-        },
-        {
-          "name": "sort",
-          "in": "query",
-          "required": false,
-          "description": "Sort field: txTime",
-          "default": "txTime"
-        }
-      ],
-      "annotations": {
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "idempotentHint": true,
-        "openWorldHint": true
-      },
-      "source": "specs/sunio-open-api.json"
-    },
-    {
       "name": "getFarmPositions",
       "method": "GET",
       "path": "/apiv2/farms/positions/user",
@@ -1095,44 +931,6 @@
           "name": "abi",
           "required": false,
           "description": "Optional router ABI; if omitted, TronWeb will attempt to infer it."
-        }
-      ],
-      "annotations": {
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "idempotentHint": true,
-        "openWorldHint": false
-      },
-      "source": "src/tools/sunswap.ts"
-    },
-    {
-      "name": "sunswap_read_contract",
-      "description": "Read data from a TRON smart contract used by SUN.IO/SUNSWAP (view/pure functions only).",
-      "parameters": [
-        {
-          "name": "network",
-          "required": false,
-          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
-        },
-        {
-          "name": "address",
-          "required": true,
-          "description": "Contract address in base58 or hex format."
-        },
-        {
-          "name": "functionName",
-          "required": true,
-          "description": "Name of the view/pure function to call."
-        },
-        {
-          "name": "args",
-          "required": false,
-          "description": "Optional array of arguments to pass to the function."
-        },
-        {
-          "name": "abi",
-          "required": false,
-          "description": "Optional contract ABI; if omitted, TronWeb will attempt to infer it."
         }
       ],
       "annotations": {
@@ -1564,49 +1362,6 @@
           "name": "deadline",
           "required": false,
           "description": "Unix timestamp deadline. Defaults to now + 30 minutes."
-        }
-      ],
-      "annotations": {
-        "readOnlyHint": false,
-        "destructiveHint": true,
-        "idempotentHint": false,
-        "openWorldHint": false
-      },
-      "source": "src/tools/sunswap.ts"
-    },
-    {
-      "name": "sunswap_send_contract",
-      "description": "Send a state-changing TRON contract transaction for SUN.IO/SUNSWAP, following the pattern: get params -> build unsigned tx -> wallet sign -> broadcast.",
-      "parameters": [
-        {
-          "name": "network",
-          "required": false,
-          "description": "TRON network: mainnet, nile, or shasta (default: mainnet)"
-        },
-        {
-          "name": "address",
-          "required": true,
-          "description": "Contract address in base58 or hex format."
-        },
-        {
-          "name": "functionName",
-          "required": true,
-          "description": "Name of the state-changing contract function to call (e.g. swap, addLiquidity)."
-        },
-        {
-          "name": "args",
-          "required": false,
-          "description": "Optional array of arguments to pass to the function."
-        },
-        {
-          "name": "value",
-          "required": false,
-          "description": "Optional TRX amount in Sun to attach as call value."
-        },
-        {
-          "name": "abi",
-          "required": false,
-          "description": "Optional contract ABI; if omitted, TronWeb will attempt to infer it."
         }
       ],
       "annotations": {

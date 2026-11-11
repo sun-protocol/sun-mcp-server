@@ -18,6 +18,20 @@ npm install
 npm run build
 ```
 
+When installing the npm package into another project, add these rules to that project's root `package.json` before installation. npm ignores `overrides` declared by dependencies; a global install or plain `npx` does not inherit the repository's transitive dependency fixes. Repository and Docker builds using the committed lockfile apply them automatically.
+
+```json
+{
+  "overrides": {
+    "tronweb": { "axios": "^1.21.1" },
+    "@pancakeswap/swap-sdk-core": { "bn.js": "^5.2.5" },
+    "@solana/web3.js": { "jayson": "^5.0.0" }
+  }
+}
+```
+
+Keep these overrides until the upstream packages accept the fixed versions. They do not resolve the remaining Zod 3 dependency in agent-wallet or the unpatched deepmerge advisory.
+
 ## Running
 
 ### stdio Mode (default)

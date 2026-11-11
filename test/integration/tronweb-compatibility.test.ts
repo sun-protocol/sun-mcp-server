@@ -3,6 +3,9 @@ import { providers } from 'tronweb'
 import { z } from 'zod'
 import { registerSunswapTools } from '../../src/tools/sunswap'
 import type { RegisterToolFn } from '../../src/types'
+import http from 'http'
+import type { AddressInfo } from 'net'
+import { executeApiCall } from '../../src/apiClient'
 
 jest.mock('../../src/wallet', () => ({ getWalletAddress: jest.fn() }))
 
@@ -42,17 +45,17 @@ describe('MCP contract results with real TronWeb', () => {
   ])(
     'serializes $type result $expected without precision loss',
     async ({ type, encoded, expected }) => {
-      stubConstantCall('value()', encoded)
+      stubConstantCall('quoteExactInput()', encoded)
 
-      const handler = handlers.get('sunswap_read_contract')
-      if (!handler) throw new Error('Contract read tool was not registered')
+      const handler = handlers.get('sunswap_quote_exact_input')
+      if (!handler) throw new Error('Quote tool was not registered')
       const response = await handler({
-        address: contractAddress,
-        functionName: 'value',
+        routerAddress: contractAddress,
+        args: [],
         abi: [
           {
             type: 'function',
-            name: 'value',
+            name: 'quoteExactInput',
             stateMutability: 'view',
             inputs: [],
             outputs: [{ name: '', type }],
@@ -90,5 +93,76 @@ describe('MCP contract results with real TronWeb', () => {
 
     expect(response.isError).not.toBe(true)
     expect(JSON.parse(response.content[0].text)).toEqual({ result: [uint256Max, '0'] })
+  })
+})
+
+describe('TronWeb and API client HTTP compatibility', () => {
+  let server: http.Server
+  let origin: string
+
+  beforeAll(async () => {
+    server = http.createServer((request, response) => {
+      let body = ''
+      request.setEncoding('utf8')
+      request.on('data', (chunk) => {
+        body += chunk
+      })
+      request.on('end', () => {
+        response.setHeader('Content-Type', 'application/json')
+        response.end(
+          JSON.stringify({
+            method: request.method,
+            url: request.url,
+            header: request.headers['x-fixture'],
+            body: body ? JSON.parse(body) : undefined,
+          }),
+        )
+      })
+    })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
+  })
+
+  afterAll(async () => {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    )
+  })
+
+  it('sends real TronWeb provider GET and POST requests through Axios', async () => {
+    const provider = new providers.HttpProvider(origin, 1000, undefined, undefined, {
+      'X-Fixture': 'tronweb',
+    })
+    expect(await provider.request('wallet/getaccount', { address: 'fixture' }, 'get')).toEqual({
+      method: 'GET',
+      url: '/wallet/getaccount?address=fixture',
+      header: 'tronweb',
+    })
+    expect(await provider.request('wallet/getaccount', { address: 'fixture' }, 'post')).toEqual({
+      method: 'POST',
+      url: '/wallet/getaccount',
+      header: 'tronweb',
+      body: { address: 'fixture' },
+    })
+  })
+
+  it('preserves API parameter mapping with real Axios', async () => {
+    const response = await executeApiCall(
+      {
+        method: 'get',
+        pathTemplate: '/price',
+        serverUrl: origin,
+        requestTimeoutMs: 1000,
+        customHeaders: { 'X-Fixture': 'api-client' },
+        parameters: [{ in: 'query', name: 'symbol', required: true, schema: { type: 'string' } }],
+        securityRequirements: null,
+      },
+      { symbol: 'TRX' },
+    )
+    expect(response).toEqual({
+      success: true,
+      statusCode: 200,
+      data: { method: 'GET', url: '/price?symbol=TRX', header: 'api-client' },
+    })
   })
 })

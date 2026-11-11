@@ -166,8 +166,7 @@ describe('API Client Integration Tests (SUN.IO)', () => {
       'X-Key': secrets.xKey,
     })
     const requestConfig = (axios as jest.MockedFunction<typeof axios>).mock.calls[0][0] as
-      | AxiosRequestConfig
-      | undefined
+      AxiosRequestConfig | undefined
     const capturedLogs = JSON.stringify((console.error as jest.Mock).mock.calls)
 
     expect(requestConfig?.params).toMatchObject({

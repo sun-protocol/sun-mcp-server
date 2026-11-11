@@ -4,14 +4,13 @@
 
 Auto-generated from the SUN.IO OpenAPI spec:
 
-- **Transactions**: scan swap/add/withdraw activity with pagination
 - **Tokens**: fetch metadata, fuzzy search
-- **Protocols**: snapshots, volume/liquidity/user/transaction history
+- **Protocols**: snapshots, volume/liquidity/user history
 - **Prices**: real-time token prices
 - **Positions**: user LP positions, tick-level data
 - **Pools**: list, search, top APY pools, hooks, volume/liquidity history
 - **Pairs**: token pair entity queries
-- **Farms**: farming pool list, transaction scanning, user farm positions
+- **Farms**: farming pool list, user farm positions
 
 ## SUNSWAP Execution Tools
 
@@ -59,11 +58,6 @@ All V3 tools feature intelligent auto-compute:
 - `sunswap_v3_increase_liquidity` — add to existing position
 - `sunswap_v3_decrease_liquidity` — remove from existing position
 - `sunswap_v3_collect` — collect accrued trading fees with pre-estimation
-
-### Generic Contract Tools
-
-- `sunswap_read_contract` — read view/pure functions
-- `sunswap_send_contract` — send state-changing transactions
 
 ## V3 Math and Pool State
 

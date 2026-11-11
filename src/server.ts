@@ -22,6 +22,8 @@ const MCP_ALLOWED_HEADER_NAMES = new Set(
   MCP_ALLOWED_HEADERS.split(',').map((header) => header.trim().toLowerCase()),
 )
 const DEFAULT_SHUTDOWN_TIMEOUT_MS = 5000
+const MAX_MCP_REQUEST_BODY_SIZE = 1024 * 1024
+const MAX_TOOL_INPUT_ELEMENTS = 10_000
 
 export interface RunningServer {
   close(): Promise<void>
@@ -106,13 +108,17 @@ function createMcpServer(
   deps: { api: SunAPI; kit: SunKit },
   logRegistrations = true,
 ) {
-  const server = new McpServer({
-    name:
-      config.specConfigs.length > 1
-        ? 'OpenAPI to MCP Generator (Multi-Spec)'
-        : primarySpec.info?.title || 'OpenAPI to MCP Generator',
-    version: primarySpec.info?.version || '1.0.0',
-  })
+  const server = new McpServer(
+    {
+      name:
+        config.specConfigs.length > 1
+          ? 'OpenAPI to MCP Generator (Multi-Spec)'
+          : primarySpec.info?.title || 'OpenAPI to MCP Generator',
+      version: primarySpec.info?.version || '1.0.0',
+    },
+    // Bound collection traversal before schema validation on both HTTP and stdio.
+    { maxToolInputElements: MAX_TOOL_INPUT_ELEMENTS },
+  )
 
   const registeredToolNames = new Set<string>()
   const registerTool: RegisterToolFn = (name, definition, handler) => {
@@ -344,6 +350,7 @@ async function startServer(): Promise<RunningServer> {
           const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
             enableJsonResponse: true,
+            maxRequestBodySize: MAX_MCP_REQUEST_BODY_SIZE,
           })
           const server = createMcpServer(primarySpec, mappedTools, { api, kit }, false)
 

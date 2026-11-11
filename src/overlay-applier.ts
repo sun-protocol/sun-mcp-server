@@ -36,6 +36,23 @@ import { JSONPath } from 'jsonpath-plus'
 import { load as yamlLoad, dump as yamlDump } from 'js-yaml'
 import deepmerge from 'deepmerge'
 
+/** Reject prototype setters on both sides before deepmerge copies any properties. */
+function assertSafeMergeInput(value: unknown): void {
+  const pending: unknown[] = [value]
+  const visited = new WeakSet<object>()
+  while (pending.length > 0) {
+    const node = pending.pop()
+    if (node === null || typeof node !== 'object' || visited.has(node)) continue
+    visited.add(node)
+    for (const key of Object.keys(node)) {
+      if (key === '__proto__') {
+        throw new Error('Unsafe prototype key in overlay merge input')
+      }
+      pending.push((node as Record<string, unknown>)[key])
+    }
+  }
+}
+
 /** Overlay → info object */
 export interface OverlayInfo {
   title: string
@@ -124,6 +141,8 @@ export class OverlayApplier {
       throw new Error('Overlay document missing required "overlay" version field')
 
     const targetObj: any = typeof target === 'string' ? this.parseAny(target) : target
+    assertSafeMergeInput(targetObj)
+    assertSafeMergeInput(overlayDoc)
     let workingDoc: any = this.clone(targetObj)
 
     for (const action of overlayDoc.actions) {

@@ -65,3 +65,6 @@ Library
 # AI tools
 .claude
 .private
+
+# Local planning documents
+/docs/superpowers/

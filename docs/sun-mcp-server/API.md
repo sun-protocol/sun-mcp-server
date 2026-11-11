@@ -2,29 +2,11 @@
 
 > Generated from the runtime tool definitions by `npm run docs:tools`; do not edit manually.
 
-This catalog contains 23 OpenAPI-generated tools and 18 custom SUNSWAP tools.
+This catalog contains 20 OpenAPI-generated tools and 16 custom SUNSWAP tools.
 
 ## OpenAPI-Generated Tools
 
 Source of truth: `specs/sunio-open-api.json`. Risk annotations are derived from the HTTP method.
-
-### scanTransactions
-
-Scan transactions
-
-- Endpoint: `GET /apiv2/transactions/scan`
-- Risk: `read-only, idempotent, open-world`
-
-| Parameter | Location | Required | Description / default behavior |
-| --- | --- | --- | --- |
-| `protocol` | query | no | Protocol to filter: V1, V1_5, V2, V3, V4, CURVE, ALL |
-| `tokenAddress` | query | no | Token address to filter, can not be used with poolAddress |
-| `poolAddress` | query | no | Comma-separated pool address to filter, can not be used with tokenAddress |
-| `type` | query | no | Transaction type to filter: add, withdraw, swap |
-| `startTime` | query | no | Start time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd) |
-| `endTime` | query | no | End time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd) |
-| `pageSize` | query | no | Page size; default: 10 |
-| `offset` | query | no | Pagination offset from previous response |
 
 ### getTokens
 
@@ -87,19 +69,6 @@ Fetch historical protocol volume data
 Fetch historical protocol users count data
 
 - Endpoint: `GET /apiv2/protocols/history/usersCount`
-- Risk: `read-only, idempotent, open-world`
-
-| Parameter | Location | Required | Description / default behavior |
-| --- | --- | --- | --- |
-| `protocol` | query | no | Protocol: V1, V1_5, V2, V3, V4, CURVE, ALL; default: "ALL" |
-| `startDate` | query | no | Start date inclusive, format: yyyy-MM-dd |
-| `endDate` | query | no | End date inclusive, format: yyyy-MM-dd |
-
-### getTransactionsHistory
-
-Fetch historical protocol transactions data
-
-- Endpoint: `GET /apiv2/protocols/history/transactions`
 - Risk: `read-only, idempotent, open-world`
 
 | Parameter | Location | Required | Description / default behavior |
@@ -302,24 +271,6 @@ Get list of farming pools
 | `pageSize` | query | no | Page size; default: 10 |
 | `sort` | query | no | Sort field: totalLockedUsd; default: "totalLockedUsd" |
 
-### getFarmTransactions
-
-Scan farming transactions
-
-- Endpoint: `GET /apiv2/farms/transactions`
-- Risk: `read-only, idempotent, open-world`
-
-| Parameter | Location | Required | Description / default behavior |
-| --- | --- | --- | --- |
-| `userAddress` | query | no | User wallet address |
-| `farmAddress` | query | no | Farm address to filter |
-| `farmTxType` | query | no | Comma-separated farm transaction types to filter: STAKE, UNSTAKE, LOCK, UNLOCK, CLAIM_REWARD, CLAIM_REWARD_ACC |
-| `startTime` | query | no | Start time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd) |
-| `endTime` | query | no | End time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd) |
-| `pageNo` | query | no | Page number, starting from 1; default: 1 |
-| `pageSize` | query | no | Page size; default: 10 |
-| `sort` | query | no | Sort field: txTime; default: "txTime" |
-
 ### getFarmPositions
 
 Get user's farming positions
@@ -388,20 +339,6 @@ Estimate SUNSWAP smart router swap results (exact input) by calling its quote/vi
 | `functionName` | no | Quote function name on the router (default: quoteExactInput). You may override if router uses a different name, e.g. getAmountsOut. |
 | `args` | yes | Arguments passed to the router quote function, in ABI order. |
 | `abi` | no | Optional router ABI; if omitted, TronWeb will attempt to infer it. |
-
-### sunswap_read_contract
-
-Read data from a TRON smart contract used by SUN.IO/SUNSWAP (view/pure functions only).
-
-- Risk: `read-only, idempotent`
-
-| Parameter | Required | Description / default behavior |
-| --- | --- | --- |
-| `network` | no | TRON network: mainnet, nile, or shasta (default: mainnet) |
-| `address` | yes | Contract address in base58 or hex format. |
-| `functionName` | yes | Name of the view/pure function to call. |
-| `args` | no | Optional array of arguments to pass to the function. |
-| `abi` | no | Optional contract ABI; if omitted, TronWeb will attempt to infer it. |
 
 ### sunswap_swap_exact_input
 
@@ -533,21 +470,6 @@ Decrease liquidity of an existing SUNSWAP V3 position. If token0/token1/fee are 
 | `amount0Min` | no | Minimum token0 to receive. Auto-calculated with 5% slippage if omitted. |
 | `amount1Min` | no | Minimum token1 to receive. Auto-calculated with 5% slippage if omitted. |
 | `deadline` | no | Unix timestamp deadline. Defaults to now + 30 minutes. |
-
-### sunswap_send_contract
-
-Send a state-changing TRON contract transaction for SUN.IO/SUNSWAP, following the pattern: get params -> build unsigned tx -> wallet sign -> broadcast.
-
-- Risk: `write, destructive`
-
-| Parameter | Required | Description / default behavior |
-| --- | --- | --- |
-| `network` | no | TRON network: mainnet, nile, or shasta (default: mainnet) |
-| `address` | yes | Contract address in base58 or hex format. |
-| `functionName` | yes | Name of the state-changing contract function to call (e.g. swap, addLiquidity). |
-| `args` | no | Optional array of arguments to pass to the function. |
-| `value` | no | Optional TRX amount in Sun to attach as call value. |
-| `abi` | no | Optional contract ABI; if omitted, TronWeb will attempt to infer it. |
 
 ### sunswap_v4_mint_position
 

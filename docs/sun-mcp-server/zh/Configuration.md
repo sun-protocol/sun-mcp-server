@@ -35,6 +35,8 @@ OpenAPI 规范和 overlay 的相对路径以最终选中的配置文件所在目
 | `CUSTOM_HEADERS` | 自定义请求头（JSON 格式） | |
 | `TARGET_API_TIMEOUT_MS` | API 请求超时（毫秒） | |
 
+HTTP MCP 请求体上限为 1 MiB，包括 chunked 请求；每个 batch 最多包含 100 条消息。HTTP 和 stdio 的工具参数在 schema 校验前限制为总计 10,000 个数组元素和对象键，超限请求需拆分为较小的调用。OpenAPI overlay 合并会拒绝基础文档或 overlay 中的 `__proto__` 键。
+
 浏览器预检允许 MCP 协议请求头及 `Authorization`，未知请求头会被拒绝。服务不支持
 Cookie credential，也不会返回 `Access-Control-Allow-Credentials`；浏览器认证部署应使用
 精确 Origin 白名单。
