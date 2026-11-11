@@ -45,17 +45,17 @@ describe('MCP contract results with real TronWeb', () => {
   ])(
     'serializes $type result $expected without precision loss',
     async ({ type, encoded, expected }) => {
-      stubConstantCall('value()', encoded)
+      stubConstantCall('quoteExactInput()', encoded)
 
-      const handler = handlers.get('sunswap_read_contract')
-      if (!handler) throw new Error('Contract read tool was not registered')
+      const handler = handlers.get('sunswap_quote_exact_input')
+      if (!handler) throw new Error('Quote tool was not registered')
       const response = await handler({
-        address: contractAddress,
-        functionName: 'value',
+        routerAddress: contractAddress,
+        args: [],
         abi: [
           {
             type: 'function',
-            name: 'value',
+            name: 'quoteExactInput',
             stateMutability: 'view',
             inputs: [],
             outputs: [{ name: '', type }],

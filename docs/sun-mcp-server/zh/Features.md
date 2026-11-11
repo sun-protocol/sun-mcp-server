@@ -4,14 +4,13 @@
 
 基于 SUN.IO OpenAPI 规范自动生成：
 
-- **交易 (Transactions)**: 按协议、代币/池子、类型和时间范围扫描交易
 - **代币 (Tokens)**: 获取元数据、模糊搜索
-- **协议 (Protocols)**: 快照、交易量/流动性/用户/交易数历史
+- **协议 (Protocols)**: 快照、交易量/流动性/用户历史
 - **价格 (Prices)**: 实时代币价格
 - **仓位 (Positions)**: 用户 LP 仓位、tick 级别数据
 - **池子 (Pools)**: 列表、搜索、高 APY 池子、hooks、交易量/流动性历史
 - **交易对 (Pairs)**: 代币对查询
-- **挖矿 (Farms)**: 挖矿池列表、交易扫描、用户挖矿仓位
+- **挖矿 (Farms)**: 挖矿池列表、用户挖矿仓位
 
 ## SUNSWAP 执行工具
 
@@ -59,11 +58,6 @@
 - `sunswap_v3_increase_liquidity` — 向现有仓位追加流动性
 - `sunswap_v3_decrease_liquidity` — 从现有仓位移除流动性
 - `sunswap_v3_collect` — 领取累计交易手续费（附预估）
-
-### 通用合约工具
-
-- `sunswap_read_contract` — 读取合约 view/pure 函数
-- `sunswap_send_contract` — 发送状态变更交易
 
 ## V3 数学与池子状态
 

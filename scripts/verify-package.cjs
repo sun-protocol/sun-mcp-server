@@ -129,6 +129,21 @@ async function main() {
   if (!Array.isArray(result.tools) || result.tools.length === 0) {
     throw new Error('packaged CLI returned no MCP tools')
   }
+  for (const name of [
+    'sunswap_read_contract',
+    'sunswap_send_contract',
+    'scanTransactions',
+    'getFarmTransactions',
+    'getTransactionsHistory',
+  ]) {
+    if (result.tools.some((tool) => tool.name === name)) {
+      throw new Error('packaged CLI advertises disabled tool: ' + name)
+    }
+    const rejected = await client.callTool({ name, arguments: {} })
+    if (!rejected.isError || !/not found/i.test(JSON.stringify(rejected.content))) {
+      throw new Error('packaged CLI did not reject disabled tool: ' + name)
+    }
+  }
   const oversized = await client.callTool({
     name: 'sunswap_get_balances',
     arguments: { tokens: Array.from({ length: 10001 }, () => ({ type: 'TRX' })) },

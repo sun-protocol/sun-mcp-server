@@ -43,7 +43,7 @@ describe('SUN.IO MCP Integration Tests', () => {
       filter: { whitelist: null, blacklist: [] },
     })
 
-    expect(mappedTools.length).toBeGreaterThan(20)
+    expect(mappedTools).toHaveLength(20)
     const names = mappedTools.map((tool) => tool.mcpToolDefinition.name)
     expect(names).toContain('getPrice')
     expect(names).toContain('getPools')

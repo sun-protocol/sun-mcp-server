@@ -28,7 +28,7 @@ describe('MCP Mapper Integration Tests (SUN.IO)', () => {
 
     expect(mappedTools).toBeDefined()
     expect(Array.isArray(mappedTools)).toBe(true)
-    expect(mappedTools.length).toBeGreaterThan(20)
+    expect(mappedTools).toHaveLength(20)
 
     const toolNames = mappedTools.map((t) => t.mcpToolDefinition.name)
     expect(toolNames).toContain('getPrice')

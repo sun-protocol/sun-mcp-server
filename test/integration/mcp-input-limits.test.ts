@@ -20,15 +20,17 @@ jest.mock('../../src/config', () => ({
     mcpPort: 0,
     mcpPath: '/',
     mcpCorsOrigins: [],
-    specConfigs: [{ specPath: 'fixture', overlayPaths: [] }],
+    specConfigs: [
+      {
+        specPath: require('path').resolve(__dirname, '../../specs/sunio-open-api.json'),
+        overlayPaths: [],
+        filter: { whitelist: null, blacklist: [] },
+      },
+    ],
   },
 }))
-jest.mock('../../src/openapiProcessor', () => ({
-  getProcessedOpenApi: async () => ({ info: { title: 'Limits', version: '1' }, paths: {} }),
-}))
-jest.mock('../../src/mcpMapper', () => ({ mapOpenApiToMcpTools: () => [] }))
 
-describe('MCP HTTP input limits', () => {
+describe('MCP HTTP tool access and input limits', () => {
   let running: RunningServer
   let url: string
 
@@ -89,6 +91,33 @@ describe('MCP HTTP input limits', () => {
       params: { name: 'sunswap_get_balances', arguments: { tokens } },
     }
   }
+
+  it.each([
+    'sunswap_read_contract',
+    'sunswap_send_contract',
+    'scanTransactions',
+    'getFarmTransactions',
+    'getTransactionsHistory',
+  ])('does not advertise or dispatch the disabled tool %s', async (name) => {
+    const list = await post({ jsonrpc: '2.0', id: 1, method: 'tools/list' })
+    const tools = (await list.json()) as { result: { tools: { name: string }[] } }
+    const names = tools.result.tools.map((tool) => tool.name)
+    expect(names).toContain('getPrice')
+    expect(names).toContain('sunswap_quote_exact_input')
+    expect(names).not.toContain(name)
+
+    const response = await post({
+      jsonrpc: '2.0',
+      id: 2,
+      method: 'tools/call',
+      params: { name, arguments: {} },
+    })
+    const message = (await response.json()) as {
+      result: { isError?: boolean; content: { text: string }[] }
+    }
+    expect(message.result.isError).toBe(true)
+    expect(message.result.content[0].text).toMatch(/not found/i)
+  })
 
   it('rejects a request larger than 1 MiB before dispatch', async () => {
     const response = await post({

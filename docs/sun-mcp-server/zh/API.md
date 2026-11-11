@@ -2,29 +2,11 @@
 
 > 此文件由 `npm run docs:tools` 从实际工具定义生成，请勿手工修改。
 
-目录包含 23 个 OpenAPI 动态工具和 18 个 SUNSWAP 自定义工具。
+目录包含 20 个 OpenAPI 动态工具和 16 个 SUNSWAP 自定义工具。
 
 ## OpenAPI 自动生成工具
 
 事实源：`specs/sunio-open-api.json`。风险标记直接由 HTTP 方法推导。
-
-### scanTransactions
-
-Scan transactions
-
-- 端点: `GET /apiv2/transactions/scan`
-- 风险: `read-only, idempotent, open-world`
-
-| 参数 | 位置 | 必填 | 说明 / 默认行为 |
-| --- | --- | --- | --- |
-| `protocol` | query | 否 | Protocol to filter: V1, V1_5, V2, V3, V4, CURVE, ALL |
-| `tokenAddress` | query | 否 | Token address to filter, can not be used with poolAddress |
-| `poolAddress` | query | 否 | Comma-separated pool address to filter, can not be used with tokenAddress |
-| `type` | query | 否 | Transaction type to filter: add, withdraw, swap |
-| `startTime` | query | 否 | Start time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd) |
-| `endTime` | query | 否 | End time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd) |
-| `pageSize` | query | 否 | Page size; 默认值: 10 |
-| `offset` | query | 否 | Pagination offset from previous response |
 
 ### getTokens
 
@@ -87,19 +69,6 @@ Fetch historical protocol volume data
 Fetch historical protocol users count data
 
 - 端点: `GET /apiv2/protocols/history/usersCount`
-- 风险: `read-only, idempotent, open-world`
-
-| 参数 | 位置 | 必填 | 说明 / 默认行为 |
-| --- | --- | --- | --- |
-| `protocol` | query | 否 | Protocol: V1, V1_5, V2, V3, V4, CURVE, ALL; 默认值: "ALL" |
-| `startDate` | query | 否 | Start date inclusive, format: yyyy-MM-dd |
-| `endDate` | query | 否 | End date inclusive, format: yyyy-MM-dd |
-
-### getTransactionsHistory
-
-Fetch historical protocol transactions data
-
-- 端点: `GET /apiv2/protocols/history/transactions`
 - 风险: `read-only, idempotent, open-world`
 
 | 参数 | 位置 | 必填 | 说明 / 默认行为 |
@@ -302,24 +271,6 @@ Get list of farming pools
 | `pageSize` | query | 否 | Page size; 默认值: 10 |
 | `sort` | query | 否 | Sort field: totalLockedUsd; 默认值: "totalLockedUsd" |
 
-### getFarmTransactions
-
-Scan farming transactions
-
-- 端点: `GET /apiv2/farms/transactions`
-- 风险: `read-only, idempotent, open-world`
-
-| 参数 | 位置 | 必填 | 说明 / 默认行为 |
-| --- | --- | --- | --- |
-| `userAddress` | query | 否 | User wallet address |
-| `farmAddress` | query | 否 | Farm address to filter |
-| `farmTxType` | query | 否 | Comma-separated farm transaction types to filter: STAKE, UNSTAKE, LOCK, UNLOCK, CLAIM_REWARD, CLAIM_REWARD_ACC |
-| `startTime` | query | 否 | Start time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd) |
-| `endTime` | query | 否 | End time (format: yyyy-MM-dd HH:mm:ss or yyyy-MM-dd) |
-| `pageNo` | query | 否 | Page number, starting from 1; 默认值: 1 |
-| `pageSize` | query | 否 | Page size; 默认值: 10 |
-| `sort` | query | 否 | Sort field: txTime; 默认值: "txTime" |
-
 ### getFarmPositions
 
 Get user's farming positions
@@ -388,20 +339,6 @@ Estimate SUNSWAP smart router swap results (exact input) by calling its quote/vi
 | `functionName` | 否 | Quote function name on the router (default: quoteExactInput). You may override if router uses a different name, e.g. getAmountsOut. |
 | `args` | 是 | Arguments passed to the router quote function, in ABI order. |
 | `abi` | 否 | Optional router ABI; if omitted, TronWeb will attempt to infer it. |
-
-### sunswap_read_contract
-
-Read data from a TRON smart contract used by SUN.IO/SUNSWAP (view/pure functions only).
-
-- 风险: `read-only, idempotent`
-
-| 参数 | 必填 | 说明 / 默认行为 |
-| --- | --- | --- |
-| `network` | 否 | TRON network: mainnet, nile, or shasta (default: mainnet) |
-| `address` | 是 | Contract address in base58 or hex format. |
-| `functionName` | 是 | Name of the view/pure function to call. |
-| `args` | 否 | Optional array of arguments to pass to the function. |
-| `abi` | 否 | Optional contract ABI; if omitted, TronWeb will attempt to infer it. |
 
 ### sunswap_swap_exact_input
 
@@ -533,21 +470,6 @@ Decrease liquidity of an existing SUNSWAP V3 position. If token0/token1/fee are 
 | `amount0Min` | 否 | Minimum token0 to receive. Auto-calculated with 5% slippage if omitted. |
 | `amount1Min` | 否 | Minimum token1 to receive. Auto-calculated with 5% slippage if omitted. |
 | `deadline` | 否 | Unix timestamp deadline. Defaults to now + 30 minutes. |
-
-### sunswap_send_contract
-
-Send a state-changing TRON contract transaction for SUN.IO/SUNSWAP, following the pattern: get params -> build unsigned tx -> wallet sign -> broadcast.
-
-- 风险: `write, destructive`
-
-| 参数 | 必填 | 说明 / 默认行为 |
-| --- | --- | --- |
-| `network` | 否 | TRON network: mainnet, nile, or shasta (default: mainnet) |
-| `address` | 是 | Contract address in base58 or hex format. |
-| `functionName` | 是 | Name of the state-changing contract function to call (e.g. swap, addLiquidity). |
-| `args` | 否 | Optional array of arguments to pass to the function. |
-| `value` | 否 | Optional TRX amount in Sun to attach as call value. |
-| `abi` | 否 | Optional contract ABI; if omitted, TronWeb will attempt to infer it. |
 
 ### sunswap_v4_mint_position
 

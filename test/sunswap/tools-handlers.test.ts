@@ -87,7 +87,6 @@ function mockKit(overrides: Record<string, jest.Mock> = {}) {
       .fn()
       .mockResolvedValue([{ address: 'TAddr1', type: 'TRX', balance: '100000000' }]),
     quoteExactInput: jest.fn().mockResolvedValue('99000000'),
-    readContract: jest.fn().mockResolvedValue('contract-return-value'),
     swapExactInput: jest.fn().mockResolvedValue({ txid: 'tx-swap-input', result: true }),
     swap: jest.fn().mockResolvedValue({
       txid: 'tx-swap',
@@ -99,7 +98,6 @@ function mockKit(overrides: Record<string, jest.Mock> = {}) {
         impact: '0.01',
       },
     }),
-    sendContractTx: jest.fn().mockResolvedValue({ txid: 'tx-send', result: true }),
     addLiquidityV2: jest.fn().mockResolvedValue({ txid: 'tx-v2-add', result: true }),
     removeLiquidityV2: jest.fn().mockResolvedValue({ txid: 'tx-v2-rm', result: true }),
     mintPositionV3: jest.fn().mockResolvedValue({ txid: 'tx-v3-mint', tokenId: '12345' }),
@@ -225,40 +223,6 @@ describe('sunswap tool handlers', () => {
     })
   })
 
-  describe('sunswap_read_contract', () => {
-    const params = {
-      address: 'TContract1',
-      functionName: 'balanceOf',
-      args: ['TOwner1'],
-    }
-
-    it('returns contract read result', async () => {
-      const result = await handlers.sunswap_read_contract(params)
-      expect(jsonOf(result).result).toBe('contract-return-value')
-      expect(kit.readContract).toHaveBeenCalledWith(
-        expect.objectContaining({
-          address: 'TContract1',
-          functionName: 'balanceOf',
-          args: ['TOwner1'],
-        }),
-        'mainnet',
-      )
-    })
-
-    it('uses provided network', async () => {
-      await handlers.sunswap_read_contract({ ...params, network: 'nile' })
-      expect(kit.readContract).toHaveBeenCalledWith(expect.anything(), 'nile')
-    })
-
-    it('returns isError on failure', async () => {
-      kit.readContract.mockRejectedValueOnce(new Error('contract not found'))
-      const result = await handlers.sunswap_read_contract(params)
-
-      expect(result.isError).toBe(true)
-      expect(textOf(result)).toContain('contract not found')
-    })
-  })
-
   describe('sunswap_get_token_price', () => {
     it('returns prices from api.getPrice', async () => {
       const result = await handlers.sunswap_get_token_price({ symbol: 'SUN,TRX' })
@@ -341,34 +305,6 @@ describe('sunswap tool handlers', () => {
 
       expect(result.isError).toBe(true)
       expect(textOf(result)).toContain('route not found')
-    })
-  })
-
-  describe('sunswap_send_contract', () => {
-    const params = {
-      address: 'TContract1',
-      functionName: 'transfer',
-      args: ['TRecipient', '1000000'],
-    }
-
-    it('returns tx result from kit.sendContractTx', async () => {
-      const result = await handlers.sunswap_send_contract(params)
-      expect(jsonOf(result).txid).toBe('tx-send')
-      expect(kit.sendContractTx).toHaveBeenCalledWith(
-        expect.objectContaining({
-          address: 'TContract1',
-          functionName: 'transfer',
-          network: 'mainnet',
-        }),
-      )
-    })
-
-    it('returns isError on failure', async () => {
-      kit.sendContractTx.mockRejectedValueOnce(new Error('out of bandwidth'))
-      const result = await handlers.sunswap_send_contract(params)
-
-      expect(result.isError).toBe(true)
-      expect(textOf(result)).toContain('out of bandwidth')
     })
   })
 
