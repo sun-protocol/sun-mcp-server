@@ -1,7 +1,10 @@
 // Type declarations for MCP SDK modules
 declare module '@modelcontextprotocol/sdk/server/mcp.js' {
   export class McpServer {
-    constructor(options: { name: string; version: string })
+    constructor(
+      options: { name: string; version: string },
+      serverOptions?: { maxToolInputElements?: number },
+    )
     tool(name: string, description: string, handler: (extra: any) => Promise<any>): void
     connect(transport: any): Promise<void>
     close(): Promise<void>

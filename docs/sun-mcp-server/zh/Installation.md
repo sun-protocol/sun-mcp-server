@@ -17,6 +17,20 @@ npm install
 npm run build
 ```
 
+作为 npm 依赖安装到其他项目时，请先在消费项目根 `package.json` 中加入以下规则。npm 不继承依赖包声明的 `overrides`；全局安装或直接 `npx` 不会继承本仓库的传递依赖修复。使用已提交锁文件的仓库和 Docker 构建会自动应用这些规则。
+
+```json
+{
+  "overrides": {
+    "tronweb": { "axios": "^1.21.1" },
+    "@pancakeswap/swap-sdk-core": { "bn.js": "^5.2.5" },
+    "@solana/web3.js": { "jayson": "^5.0.0" }
+  }
+}
+```
+
+在上游依赖允许修复版本前保留这些覆盖。它们不解决 agent-wallet 剩余的 Zod 3 依赖，也不消除尚无上游补丁的 deepmerge 公告。
+
 ## 运行
 
 ### stdio 模式（默认）

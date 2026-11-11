@@ -122,11 +122,23 @@ async function main() {
     command: path.join(process.cwd(), 'node_modules/.bin/sun-mcp-server'),
     cwd: process.cwd(),
     stderr: 'pipe',
+    env: { ...process.env, AGENT_WALLET_DIR: path.join(process.cwd(), 'empty-wallet') },
   })
   await client.connect(transport)
   const result = await client.listTools()
   if (!Array.isArray(result.tools) || result.tools.length === 0) {
     throw new Error('packaged CLI returned no MCP tools')
+  }
+  const oversized = await client.callTool({
+    name: 'sunswap_get_balances',
+    arguments: { tokens: Array.from({ length: 10001 }, () => ({ type: 'TRX' })) },
+  })
+  if (!oversized.isError || !/element|limit|exceed/i.test(JSON.stringify(oversized.content))) {
+    throw new Error('packaged stdio CLI accepted oversized tool arguments')
+  }
+  const afterRejection = await client.listTools()
+  if (afterRejection.tools.length !== result.tools.length) {
+    throw new Error('packaged CLI failed to recover after rejecting oversized input')
   }
   await client.close()
   process.stdout.write(String(result.tools.length))
@@ -146,6 +158,8 @@ main().catch((error) => {
       Object.entries(process.env).filter(
         ([key, value]) =>
           typeof value === 'string' &&
+          !key.startsWith('AGENT_WALLET_') &&
+          !['TRON_PRIVATE_KEY', 'TRON_MNEMONIC'].includes(key) &&
           ![
             'CONFIG_FILE',
             'MCP_TRANSPORT',

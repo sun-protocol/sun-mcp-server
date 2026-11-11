@@ -355,6 +355,7 @@ describe('server startup in read-only mode', () => {
     expect(StreamableHTTPServerTransport).toHaveBeenNthCalledWith(1, {
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
+      maxRequestBodySize: 1024 * 1024,
     })
     expect(connect).toHaveBeenCalledTimes(3)
     expect(handleRequest).toHaveBeenCalledTimes(3)

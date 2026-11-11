@@ -36,6 +36,8 @@ the selected configuration file.
 | `CUSTOM_HEADERS` | Custom headers as JSON | |
 | `TARGET_API_TIMEOUT_MS` | API request timeout in ms | |
 
+HTTP MCP requests are limited to 1 MiB, including chunked bodies, and batches to 100 messages. Tool arguments are limited to 10,000 array elements and object keys in total before schema validation, on both HTTP and stdio. Split larger requests into smaller calls. OpenAPI overlay merges reject `__proto__` keys in either the base document or the overlay.
+
 Browser preflight accepts the MCP protocol headers plus `Authorization`. Unknown requested
 headers are rejected. Cookie credentials are not supported, and the server never emits
 `Access-Control-Allow-Credentials`; use an exact origin allowlist for authenticated browser
