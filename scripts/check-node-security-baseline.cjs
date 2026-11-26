@@ -8,7 +8,7 @@ const path = require('node:path')
 const root = path.resolve(__dirname, '..')
 const expectedEngine = '>=22.23.4 <23 || >=24.22.1 <25'
 const expectedImage =
-  'node:24.22.1-bookworm-slim@sha256:1681862882da07ee5476fee047bcf34138833f1df42633bb25bcb0f438d5bf3d'
+  'node:24.22.3-bookworm-slim@sha256:873f586f3794f52281bd039bf02c048a0be08fde619338f9941bad1eb6b34530'
 const minimumVersions = new Map([
   [22, [22, 23, 4]],
   [24, [24, 22, 1]],
@@ -42,17 +42,20 @@ const nodeImages = dockerfile
   .map((line) => line.match(/^FROM\s+(node:\S+)/iu)?.[1])
   .filter(Boolean)
 
-if (nodeImages.length !== 2) {
-  errors.push(`Dockerfile must contain exactly two Node.js base stages; found ${nodeImages.length}`)
+if (nodeImages.length !== 3) {
+  errors.push(`Dockerfile must contain exactly three Node.js base stages; found ${nodeImages.length}`)
 }
 for (const image of nodeImages) {
   if (image !== expectedImage) {
     errors.push(`Dockerfile Node.js base must be pinned to ${expectedImage}; found ${image}`)
   }
 }
+if (!dockerfile.includes('/usr/local/lib/node_modules/npm')) {
+  errors.push('Dockerfile production stage must remove bundled global npm modules')
+}
 
 const ciWorkflow = read('.github/workflows/ci.yml')
-for (const version of ['22.23.4', '24.22.1']) {
+for (const version of ['22.23.4', '24.22.3']) {
   if (!ciWorkflow.includes(`"${version}"`)) {
     errors.push(`CI matrix must test Node.js ${version}`)
   }

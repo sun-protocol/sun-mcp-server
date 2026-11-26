@@ -43,7 +43,13 @@ jest.mock('@sun-protocol/sun-kit', () => ({
 // ---------------------------------------------------------------------------
 
 import { resolveWalletProvider } from '@bankofai/agent-wallet'
-import { initWallet, getWallet, getWalletAddress, isWalletConfigured } from '../../src/wallet'
+import {
+  initWallet,
+  getWallet,
+  getWalletAddress,
+  isWalletConfigured,
+  resetWallet,
+} from '../../src/wallet'
 
 // We need to reset the module-level singleton between tests.
 // initWallet() sets a module-scoped `_wallet`; to truly isolate tests we
@@ -141,5 +147,27 @@ describe('getWalletAddress', () => {
 
     const address = await getWalletAddress()
     expect(address).toBe('T_AGENT_ADDR_mock')
+  })
+
+  it('unwraps agent-wallet v3 TronSignedTransactionArtifact and resets cleanly', async () => {
+    mockResolveWalletProvider.mockReturnValue({
+      getActiveWallet: jest.fn(async () => ({
+        getAddress: jest.fn(async () => 'T_V3_ADDR'),
+        signTransaction: jest.fn(async () => ({
+          family: 'tron',
+          transaction: { txID: 'v3-tx-id', signature: ['abcd'] },
+        })),
+      })),
+    } as any)
+
+    await initWallet()
+    const wallet = getWallet() as any
+    await expect(wallet.signTransaction({ raw_data_hex: '0a02' })).resolves.toEqual({
+      txID: 'v3-tx-id',
+      signature: ['abcd'],
+    })
+
+    resetWallet()
+    expect(isWalletConfigured()).toBe(false)
   })
 })

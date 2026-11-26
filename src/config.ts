@@ -11,6 +11,7 @@ import {
   parseOptionalBooleanEnv,
   selectScopedConfigValue,
 } from './utils/configValues'
+import { parseAuthTokens } from './utils/httpAuth'
 import { normalizeMcpPath } from './utils/mcpPath'
 
 dotenv.config()
@@ -66,6 +67,19 @@ const argv = yargs(hideBin(process.argv))
     type: 'string',
     description:
       'Comma-separated allowed origins for streamable HTTP CORS; leave empty to deny browser origins',
+  })
+  .option('authToken', {
+    type: 'string',
+    description: 'Bearer token(s) (comma-separated) required for streamable HTTP MCP requests',
+  })
+  .option('allowUnauthenticatedHttp', {
+    type: 'boolean',
+    description:
+      'Explicitly allow unauthenticated streamable HTTP MCP ONLY for credential-free read-only deployments',
+  })
+  .option('readOnly', {
+    type: 'boolean',
+    description: 'Disable wallet initialization and expose only read-only MCP tools',
   })
   .option('transport', {
     type: 'string',
@@ -223,6 +237,12 @@ const envValues = {
   host: process.env.MCP_SERVER_HOST,
   mcpPath: process.env.MCP_SERVER_PATH,
   corsOrigins: process.env.MCP_CORS_ORIGINS,
+  authToken: process.env.MCP_AUTH_TOKEN,
+  allowUnauthenticatedHttp: parseOptionalBooleanEnv(
+    process.env.MCP_ALLOW_UNAUTHENTICATED_HTTP,
+    'MCP_ALLOW_UNAUTHENTICATED_HTTP',
+  ),
+  readOnly: parseOptionalBooleanEnv(process.env.MCP_READ_ONLY, 'MCP_READ_ONLY'),
   transport: process.env.MCP_TRANSPORT as TransportMode | undefined,
   targetUrl: process.env.TARGET_API_BASE_URL,
   timeout: process.env.TARGET_API_TIMEOUT_MS
@@ -255,6 +275,27 @@ const corsOriginsRaw = getValueWithPriority(
   '',
 )
 const mcpCorsOrigins = parsePatternList(corsOriginsRaw) ?? []
+const authTokenRaw = getValueWithPriority<unknown>(
+  argv.authToken,
+  envValues.authToken,
+  jsonConfig.authToken,
+  '',
+)
+const mcpAuthTokens = parseAuthTokens(authTokenRaw)
+const mcpAllowUnauthenticatedHttp = getValueWithPriority(
+  argv.allowUnauthenticatedHttp,
+  envValues.allowUnauthenticatedHttp,
+  typeof jsonConfig.allowUnauthenticatedHttp === 'boolean'
+    ? jsonConfig.allowUnauthenticatedHttp
+    : undefined,
+  false,
+)
+const mcpReadOnly = getValueWithPriority(
+  argv.readOnly,
+  envValues.readOnly,
+  typeof jsonConfig.readOnly === 'boolean' ? jsonConfig.readOnly : undefined,
+  false,
+)
 const transport = getValueWithPriority(
   argv.transport as TransportMode | undefined,
   envValues.transport,
@@ -412,6 +453,9 @@ export const config = {
   mcpHost: host,
   mcpPath: normalizeMcpPath(mcpPathRaw),
   mcpCorsOrigins,
+  mcpAuthTokens,
+  mcpAllowUnauthenticatedHttp,
+  mcpReadOnly,
   transport,
   targetApiBaseUrl: resolvedSpecConfigs[0].targetApiBaseUrl || '',
   requestTimeoutMs: resolvedSpecConfigs[0].requestTimeoutMs,
@@ -455,9 +499,19 @@ if (config.specConfigs.length > 1) {
 }
 console.error(`- MCP Server Port: ${config.mcpPort}`)
 console.error(`- MCP Transport: ${config.transport}`)
+console.error(`- MCP Read-Only Mode: ${config.mcpReadOnly ? 'Enabled' : 'Auto'}`)
 if (config.transport === 'streamable-http') {
   console.error(`- MCP HTTP Endpoint: http://${config.mcpHost}:${config.mcpPort}${config.mcpPath}`)
   console.error(`- MCP CORS Origins: ${config.mcpCorsOrigins.join(', ') || '(disabled)'}`)
+  console.error(
+    `- MCP HTTP Auth: ${
+      config.mcpAuthTokens.length > 0
+        ? `Bearer token (${config.mcpAuthTokens.length} configured)`
+        : config.mcpAllowUnauthenticatedHttp
+          ? 'Unauthenticated (explicitly allowed for read-only)'
+          : 'Unconfigured (startup will be rejected)'
+    }`,
+  )
 }
 if (config.targetApiBaseUrl) {
   console.error(`- Target API Base URL: ${safeUrlForLogging(config.targetApiBaseUrl)}`)

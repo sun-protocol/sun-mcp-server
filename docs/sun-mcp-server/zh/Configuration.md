@@ -29,11 +29,16 @@ OpenAPI 规范和 overlay 的相对路径以最终选中的配置文件所在目
 | `MCP_SERVER_PORT` | HTTP 服务器端口 | `8080` |
 | `MCP_SERVER_PATH` | HTTP MCP 主路径；`/` 与 `/mcp` 互为兼容别名 | `/` |
 | `MCP_CORS_ORIGINS` | 浏览器允许来源，逗号分隔；留空表示拒绝浏览器跨域访问 | （禁用） |
+| `MCP_AUTH_TOKEN` | `streamable-http` 模式必填的 Bearer Token（支持逗号分隔多 Token 轮换） | （HTTP 默认必填） |
+| `MCP_ALLOW_UNAUTHENTICATED_HTTP` | 仅在无钱包、无 API 凭证、纯只读场景下显式允许无认证 HTTP 启动 | `false` |
+| `MCP_READ_ONLY` | 强制只读模式：跳过钱包初始化并从工具列表中移除所有写工具与钱包工具 | `false` |
 | `MCP_SHUTDOWN_TIMEOUT_MS` | 强制退出前的优雅关闭期限（毫秒） | `5000` |
-| `MCP_WHITELIST_OPERATIONS` | 允许的操作（逗号分隔） | （全部） |
-| `MCP_BLACKLIST_OPERATIONS` | 屏蔽的操作（逗号分隔） | （无） |
+| `MCP_WHITELIST_OPERATIONS` | 允许暴露的 OpenAPI 与 `sunswap_*` 工具（逗号分隔，支持通配符） | （全部） |
+| `MCP_BLACKLIST_OPERATIONS` | 屏蔽的 OpenAPI 与 `sunswap_*` 工具（逗号分隔，支持通配符） | （无） |
 | `CUSTOM_HEADERS` | 自定义请求头（JSON 格式） | |
 | `TARGET_API_TIMEOUT_MS` | API 请求超时（毫秒） | |
+
+`streamable-http` 默认强制要求 `MCP_AUTH_TOKEN`（或 `--authToken`）并进行常量时间摘要比对；监听本机回环地址（`127.0.0.1` / `localhost` / `::1`）时同时校验 `Host` 头以阻断 DNS Rebinding。仅当显式设置 `MCP_ALLOW_UNAUTHENTICATED_HTTP=true` 且不存在钱包、下游 API 鉴权凭证及任何写工具时才允许无认证启动。未配置钱包或开启 `MCP_READ_ONLY=true` 时，链上写工具会自动从 `tools/list` 中裁剪隐藏。
 
 HTTP MCP 请求体上限为 1 MiB，包括 chunked 请求；每个 batch 最多包含 100 条消息。HTTP 和 stdio 的工具参数在 schema 校验前限制为总计 10,000 个数组元素和对象键，超限请求需拆分为较小的调用。OpenAPI overlay 合并会拒绝基础文档或 overlay 中的 `__proto__` 键。
 

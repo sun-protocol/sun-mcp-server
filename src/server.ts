@@ -9,10 +9,17 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { createServer } from 'http'
 import type { IncomingMessage, Server, ServerResponse } from 'http'
+import { minimatch } from 'minimatch'
 import { z } from 'zod'
 import { registerSunswapTools } from './tools'
-import { initWallet, isWalletConfigured, getWallet } from './wallet'
+import { initWallet, isWalletConfigured, getWallet, resetWallet } from './wallet'
 import { SunKit, SunAPI } from '@sun-protocol/sun-kit'
+import {
+  assertHttpTransportSecurityPolicy,
+  hasOutboundApiCredentials,
+  isAllowedHttpHostHeader,
+  verifyBearerAuthHeader,
+} from './utils/httpAuth'
 import { getCompatibleMcpPaths } from './utils/mcpPath'
 
 const MCP_ALLOWED_HEADERS =
@@ -102,12 +109,90 @@ function getShutdownTimeoutMs(): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_SHUTDOWN_TIMEOUT_MS
 }
 
+interface ServerPolicyOptions {
+  walletConfigured: boolean
+  readOnly: boolean
+  filter: {
+    whitelist: string[] | null
+    blacklist: string[]
+  }
+}
+
+const SUNSWAP_WRITE_TOOL_NAMES = [
+  'sunswap_v3_collect',
+  'sunswap_swap_exact_input',
+  'sunswap_v2_add_liquidity',
+  'sunswap_v2_remove_liquidity',
+  'sunswap_v3_mint_position',
+  'sunswap_v3_increase_liquidity',
+  'sunswap_v3_decrease_liquidity',
+  'sunswap_v4_mint_position',
+  'sunswap_v4_increase_liquidity',
+  'sunswap_v4_decrease_liquidity',
+  'sunswap_v4_collect',
+  'sunswap_swap',
+] as const
+
+function hasActiveWriteTools(
+  mappedTools: ReadonlyArray<MappedTool>,
+  policyOptions: ServerPolicyOptions,
+): boolean {
+  if (policyOptions.readOnly) {
+    return false
+  }
+
+  if (
+    policyOptions.walletConfigured &&
+    SUNSWAP_WRITE_TOOL_NAMES.some((name) => shouldAllowToolByFilter(name, policyOptions.filter))
+  ) {
+    return true
+  }
+
+  return mappedTools.some((tool) => {
+    const upperMethod = (tool.apiCallDetails.method || 'GET').toUpperCase()
+    return !['GET', 'HEAD', 'OPTIONS'].includes(upperMethod)
+  })
+}
+
+function shouldAllowToolByFilter(
+  toolName: string,
+  filter: { whitelist: string[] | null; blacklist: string[] },
+): boolean {
+  if (filter.whitelist) {
+    return filter.whitelist.some((pattern) => minimatch(toolName, pattern))
+  }
+  if (filter.blacklist.length > 0) {
+    return !filter.blacklist.some((pattern) => minimatch(toolName, pattern))
+  }
+  return true
+}
+
+function toProtocolAnnotations(annotations?: {
+  title?: string
+  readOnlyHint?: boolean
+  requiresWallet?: boolean
+  destructiveHint?: boolean
+  idempotentHint?: boolean
+  openWorldHint?: boolean
+}): Record<string, unknown> | undefined {
+  if (!annotations) return undefined
+  const { requiresWallet: _requiresWallet, ...protocolAnnotations } = annotations
+  return Object.keys(protocolAnnotations).length > 0 ? protocolAnnotations : undefined
+}
+
 function createMcpServer(
   primarySpec: any,
   mappedTools: MappedTool[],
   deps: { api: SunAPI; kit: SunKit },
   logRegistrations = true,
-) {
+  policyOptions?: ServerPolicyOptions,
+): { server: McpServer; hasWriteTools: boolean } {
+  const effectivePolicy: ServerPolicyOptions = policyOptions ?? {
+    walletConfigured: isWalletConfigured(),
+    readOnly: Boolean(config.mcpReadOnly),
+    filter: config.filter ?? { whitelist: null, blacklist: [] },
+  }
+
   const server = new McpServer(
     {
       name:
@@ -120,6 +205,7 @@ function createMcpServer(
     { maxToolInputElements: MAX_TOOL_INPUT_ELEMENTS },
   )
 
+  let hasWriteTools = false
   const registeredToolNames = new Set<string>()
   const registerTool: RegisterToolFn = (name, definition, handler) => {
     if (registeredToolNames.has(name)) {
@@ -128,16 +214,58 @@ function createMcpServer(
       )
       return
     }
+
+    const isWriteTool = definition.annotations?.readOnlyHint === false
+    const requiresWallet = definition.annotations?.requiresWallet === true
+
+    if (effectivePolicy.readOnly && (isWriteTool || requiresWallet)) {
+      if (logRegistrations) {
+        console.error(`Skipping non-read-only or wallet tool in read-only mode: ${name}`)
+      }
+      return
+    }
+
+    if (
+      !effectivePolicy.walletConfigured &&
+      (requiresWallet || (isWriteTool && name.startsWith('sunswap_')))
+    ) {
+      if (logRegistrations) {
+        console.error(`Skipping wallet-dependent tool when no wallet is configured: ${name}`)
+      }
+      return
+    }
+
+    if (name.startsWith('sunswap_') && !shouldAllowToolByFilter(name, effectivePolicy.filter)) {
+      if (logRegistrations) {
+        console.error(`Skipping custom tool ${name} due to filter rules.`)
+      }
+      return
+    }
+
     registeredToolNames.add(name)
+    if (isWriteTool) {
+      hasWriteTools = true
+    }
 
     try {
       const paramsSchema = (definition.inputSchema || {}) as z.ZodRawShape
-      if (definition.description) {
-        ;(server.tool as any)(name, definition.description, paramsSchema, async (toolParams: any) =>
-          handler(toolParams),
+      const protocolAnnotations = toProtocolAnnotations(definition.annotations)
+      const wrappedHandler = async (toolParams: any) => handler(toolParams)
+
+      if (definition.description && protocolAnnotations) {
+        ;(server.tool as any)(
+          name,
+          definition.description,
+          paramsSchema,
+          protocolAnnotations,
+          wrappedHandler,
         )
+      } else if (definition.description) {
+        ;(server.tool as any)(name, definition.description, paramsSchema, wrappedHandler)
+      } else if (protocolAnnotations) {
+        ;(server.tool as any)(name, paramsSchema, protocolAnnotations, wrappedHandler)
       } else {
-        ;(server.tool as any)(name, paramsSchema, async (toolParams: any) => handler(toolParams))
+        ;(server.tool as any)(name, paramsSchema, wrappedHandler)
       }
       if (logRegistrations) {
         console.error(`Registered Tool: ${name}`)
@@ -151,6 +279,18 @@ function createMcpServer(
 
   for (const tool of mappedTools) {
     const { mcpToolDefinition, apiCallDetails } = tool
+    const upperMethod = (apiCallDetails.method || 'GET').toUpperCase()
+    const isReadOnlyMethod = ['GET', 'HEAD', 'OPTIONS'].includes(upperMethod)
+
+    if (effectivePolicy.readOnly && !isReadOnlyMethod) {
+      if (logRegistrations) {
+        console.error(
+          `Skipping non-read-only OpenAPI tool in read-only mode: ${mcpToolDefinition.name} (${upperMethod})`,
+        )
+      }
+      continue
+    }
+
     if (logRegistrations) {
       console.error(`Registering MCP tool: ${mcpToolDefinition.name}`)
     }
@@ -203,6 +343,10 @@ function createMcpServer(
           description: mcpToolDefinition.description,
           annotations: {
             title: mcpToolDefinition.name,
+            readOnlyHint: isReadOnlyMethod,
+            destructiveHint: !isReadOnlyMethod,
+            idempotentHint: ['GET', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'].includes(upperMethod),
+            openWorldHint: true,
           },
         },
         async (toolParams: any) => {
@@ -248,7 +392,7 @@ function createMcpServer(
     }
   }
 
-  return server
+  return { server, hasWriteTools }
 }
 
 async function startServer(): Promise<RunningServer> {
@@ -295,13 +439,25 @@ async function startServer(): Promise<RunningServer> {
     console.error(`API Description: ${primarySpec.info.description}`)
   }
 
-  // Initialize global wallet singleton (agent-wallet > local > read-only)
-  await initWallet()
+  const readOnlyMode = Boolean(config.mcpReadOnly)
+  if (readOnlyMode) {
+    resetWallet()
+  } else {
+    // Initialize global wallet singleton (agent-wallet > read-only)
+    await initWallet()
+  }
+
+  const walletConfigured = !readOnlyMode && isWalletConfigured()
+  const policyOptions: ServerPolicyOptions = {
+    walletConfigured,
+    readOnly: readOnlyMode,
+    filter: config.filter ?? { whitelist: null, blacklist: [] },
+  }
 
   // Create SunKit / SunAPI instances
   const api = new SunAPI()
   const kit = new SunKit({
-    wallet: isWalletConfigured() ? getWallet() : undefined,
+    wallet: walletConfigured ? getWallet() : undefined,
     network: process.env.TRON_NETWORK || 'mainnet',
     tronGridApiKey: process.env.TRON_GRID_API_KEY,
     rpcUrl: process.env.TRON_RPC_URL,
@@ -311,6 +467,18 @@ async function startServer(): Promise<RunningServer> {
 
   try {
     if (config.transport === 'streamable-http') {
+      const mcpAuthTokens = config.mcpAuthTokens ?? []
+      const allowUnauthenticatedHttp = Boolean(config.mcpAllowUnauthenticatedHttp)
+      const hasApiCredentials = hasOutboundApiCredentials(config)
+
+      assertHttpTransportSecurityPolicy({
+        authTokens: mcpAuthTokens,
+        allowUnauthenticatedHttp,
+        walletConfigured,
+        hasApiCredentials,
+        hasWriteTools: hasActiveWriteTools(mappedTools, policyOptions),
+      })
+
       const compatibleMcpPaths = getCompatibleMcpPaths(config.mcpPath)
       const inFlightRequests = new Set<Promise<void>>()
       let shuttingDown = false
@@ -318,7 +486,13 @@ async function startServer(): Promise<RunningServer> {
 
       const handleHttpRequest = async (req: IncomingMessage, res: ServerResponse) => {
         try {
-          const requestUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`)
+          if (!isAllowedHttpHostHeader(req.headers.host, config.mcpHost)) {
+            res.setHeader('Connection', 'close')
+            writeJsonRpcError(res, 403, 'Forbidden: Host header is not allowed')
+            return
+          }
+
+          const requestUrl = new URL(req.url || '/', `http://${req.headers.host}`)
           if (!compatibleMcpPaths.has(requestUrl.pathname)) {
             res.writeHead(404, { 'Content-Type': 'application/json' })
             res.end(JSON.stringify({ error: 'Not found' }))
@@ -347,12 +521,28 @@ async function startServer(): Promise<RunningServer> {
             return
           }
 
+          if (
+            mcpAuthTokens.length > 0 &&
+            !verifyBearerAuthHeader(req.headers.authorization, mcpAuthTokens)
+          ) {
+            res.setHeader('WWW-Authenticate', 'Bearer')
+            res.setHeader('Connection', 'close')
+            writeJsonRpcError(res, 401, 'Unauthorized: Missing or invalid Bearer token')
+            return
+          }
+
           const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
             enableJsonResponse: true,
             maxRequestBodySize: MAX_MCP_REQUEST_BODY_SIZE,
           })
-          const server = createMcpServer(primarySpec, mappedTools, { api, kit }, false)
+          const { server } = createMcpServer(
+            primarySpec,
+            mappedTools,
+            { api, kit },
+            false,
+            policyOptions,
+          )
 
           transport.onerror = (transportError: Error) => {
             console.error('MCP transport error:', transportError.name)
@@ -428,7 +618,7 @@ async function startServer(): Promise<RunningServer> {
       }
     }
 
-    const server = createMcpServer(primarySpec, mappedTools, { api, kit })
+    const { server } = createMcpServer(primarySpec, mappedTools, { api, kit }, true, policyOptions)
     const transport = new StdioServerTransport()
     await server.connect(transport)
     console.error(`MCP Server started and ready for connections`)

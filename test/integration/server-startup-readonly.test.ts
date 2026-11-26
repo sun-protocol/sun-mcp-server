@@ -150,6 +150,9 @@ describe('server startup in read-only mode', () => {
       mcpPort: 18080,
       mcpPath: '/',
       mcpCorsOrigins: ['https://allowed.example'],
+      mcpAuthTokens: ['test-token'],
+      mcpAllowUnauthenticatedHttp: false,
+      mcpReadOnly: false,
       specConfigs: [
         {
           specPath: '/tmp/test-spec.json',
@@ -163,6 +166,7 @@ describe('server startup in read-only mode', () => {
       ],
     }
 
+    jest.dontMock('../../src/tools')
     jest.doMock('http', () => ({
       createServer,
     }))
@@ -333,13 +337,31 @@ describe('server startup in read-only mode', () => {
       createResponse(),
     )
     await requestHandler!(
-      { method: 'POST', url: '/', headers: { host: '127.0.0.1:18080' } },
+      {
+        method: 'POST',
+        url: '/',
+        headers: { host: '127.0.0.1:18080', authorization: 'Bearer test-token' },
+      },
       createResponse(),
     )
     await requestHandler!(
-      { method: 'POST', url: '/mcp', headers: { host: '127.0.0.1:18080' } },
+      {
+        method: 'POST',
+        url: '/mcp',
+        headers: { host: '127.0.0.1:18080', authorization: 'Bearer test-token' },
+      },
       createResponse(),
     )
+
+    const unauthenticatedPostResponse = createResponse()
+    await requestHandler!(
+      { method: 'POST', url: '/mcp', headers: { host: '127.0.0.1:18080' } },
+      unauthenticatedPostResponse,
+    )
+    expect(unauthenticatedPostResponse.writeHead).toHaveBeenCalledWith(401, {
+      'Content-Type': 'application/json',
+    })
+    expect(unauthenticatedPostResponse.setHeader).toHaveBeenCalledWith('WWW-Authenticate', 'Bearer')
 
     const notFoundResponse = createResponse()
     await requestHandler!(
@@ -410,7 +432,11 @@ describe('server startup in read-only mode', () => {
       {
         method: 'POST',
         url: '/',
-        headers: { host: '127.0.0.1:18080', 'x-request-kind': 'read' },
+        headers: {
+          host: '127.0.0.1:18080',
+          authorization: 'Bearer test-token',
+          'x-request-kind': 'read',
+        },
       },
       readResponse,
     )
@@ -418,7 +444,11 @@ describe('server startup in read-only mode', () => {
       {
         method: 'POST',
         url: '/',
-        headers: { host: '127.0.0.1:18080', 'x-request-kind': 'write' },
+        headers: {
+          host: '127.0.0.1:18080',
+          authorization: 'Bearer test-token',
+          'x-request-kind': 'write',
+        },
       },
       writeResponse,
     )
@@ -449,5 +479,148 @@ describe('server startup in read-only mode', () => {
     expect(runningServer.getInFlightRequestCount()).toBe(0)
     expect(handleRequest).toHaveBeenCalledTimes(5)
     expect(close).toHaveBeenCalledTimes(5)
+  })
+
+  it('enforces HTTP authentication startup gate and blocks unauthenticated wallet or API-credential exposure', async () => {
+    const httpServer: any = {
+      on: jest.fn(),
+      listen: jest.fn((_port: number, _host: string, callback: () => void) => {
+        callback()
+        return httpServer
+      }),
+      close: jest.fn((callback: (error?: Error) => void) => {
+        callback()
+        return httpServer
+      }),
+      closeIdleConnections: jest.fn(),
+      closeAllConnections: jest.fn(),
+    }
+
+    const mutableConfig: any = {
+      transport: 'streamable-http',
+      mcpHost: '0.0.0.0',
+      mcpPort: 18081,
+      mcpPath: '/',
+      mcpCorsOrigins: [],
+      mcpAuthTokens: [],
+      mcpAllowUnauthenticatedHttp: false,
+      mcpReadOnly: false,
+      apiKey: '',
+      securityCredentials: {},
+      customHeaders: {},
+      filter: { whitelist: null, blacklist: [] },
+      specConfigs: [
+        {
+          specPath: '/tmp/test-spec.json',
+          overlayPaths: [],
+          targetApiBaseUrl: 'https://example.com',
+          requestTimeoutMs: 30000,
+          customHeaders: {},
+          disableXMcp: false,
+          filter: { whitelist: null, blacklist: [] },
+        },
+      ],
+    }
+
+    let walletActive = false
+    let mappedOpenApiTools: any[] = []
+    const toolSpy = jest.fn()
+
+    jest.dontMock('../../src/tools')
+    jest.doMock('http', () => ({
+      createServer: jest.fn(() => httpServer),
+    }))
+    jest.doMock('@bankofai/agent-wallet', () => ({
+      UnsupportedOperationError: class extends Error {},
+      resolveWalletProvider: jest.fn(() => ({
+        getActiveWallet: jest.fn(async () =>
+          walletActive
+            ? {
+                getAddress: async () => 'T_TEST',
+                signTransaction: async () => ({ family: 'tron', transaction: {} }),
+              }
+            : null,
+        ),
+      })),
+    }))
+    jest.doMock('@sun-protocol/sun-kit', () => ({
+      SunKit: jest.fn(),
+      SunAPI: jest.fn(),
+      createReadonlyTronWeb: jest.fn(),
+    }))
+    jest.doMock('@modelcontextprotocol/sdk/server/mcp.js', () => ({
+      McpServer: jest.fn().mockImplementation(function McpServerMock(this: any) {
+        this.tool = toolSpy
+        this.connect = jest.fn(async () => undefined)
+        this.close = jest.fn(async () => undefined)
+      }),
+    }))
+    jest.doMock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
+      StdioServerTransport: jest.fn(),
+    }))
+    jest.doMock('@modelcontextprotocol/sdk/server/streamableHttp.js', () => ({
+      StreamableHTTPServerTransport: jest.fn(),
+    }))
+    jest.doMock('../../src/config', () => ({
+      config: mutableConfig,
+    }))
+    jest.doMock('../../src/openapiProcessor', () => ({
+      getProcessedOpenApi: jest.fn(async () => ({
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {},
+      })),
+    }))
+    jest.doMock('../../src/mcpMapper', () => ({
+      mapOpenApiToMcpTools: jest.fn(() => mappedOpenApiTools),
+    }))
+
+    const { startServer } = await import('../../src/server')
+
+    // 1. Default streamable-http without MCP_AUTH_TOKEN is rejected
+    await expect(startServer()).rejects.toThrow(/requires authentication by default/i)
+
+    // 2. Explicit MCP_ALLOW_UNAUTHENTICATED_HTTP=true with wallet is STILL rejected
+    mutableConfig.mcpAllowUnauthenticatedHttp = true
+    walletActive = true
+    await expect(startServer()).rejects.toThrow(/forbidden when a wallet/i)
+
+    // 3. Explicit MCP_ALLOW_UNAUTHENTICATED_HTTP=true + MCP_READ_ONLY=true skips wallet and starts cleanly
+    mutableConfig.mcpReadOnly = true
+    const readonlyRunning = await startServer()
+    await readonlyRunning.close()
+
+    // 4. Outbound API credentials cannot be exposed on unauthenticated HTTP even in read-only mode
+    mutableConfig.apiKey = 'downstream-secret'
+    await expect(startServer()).rejects.toThrow(/outbound API credentials/i)
+    mutableConfig.apiKey = ''
+
+    // 5. OpenAPI write tools (POST) cannot be exposed on unauthenticated HTTP when readOnly=false
+    walletActive = false
+    mutableConfig.mcpReadOnly = false
+    mappedOpenApiTools = [
+      {
+        mcpToolDefinition: { name: 'createOrder', description: 'write op', inputSchema: {} },
+        apiCallDetails: {
+          method: 'POST',
+          pathTemplate: '/orders',
+          serverUrl: 'https://example.com',
+          parameters: [],
+          securityRequirements: null,
+        },
+      },
+    ]
+    await expect(startServer()).rejects.toThrow(/write tools are enabled/i)
+
+    // 6. Unified blacklist filters custom sunswap_* tools in stdio mode as well
+    toolSpy.mockClear()
+    mappedOpenApiTools = []
+    walletActive = true
+    mutableConfig.transport = 'stdio'
+    mutableConfig.filter = { whitelist: null, blacklist: ['sunswap_swap_exact_input'] }
+    const stdioServer = await startServer()
+    const registeredInStdio = toolSpy.mock.calls.map((call) => call[0])
+    expect(registeredInStdio).toContain('sunswap_swap')
+    expect(registeredInStdio).not.toContain('sunswap_swap_exact_input')
+    await stdioServer.close()
   })
 })

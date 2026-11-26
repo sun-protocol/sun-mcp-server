@@ -54,7 +54,7 @@ The fastest way to try SUN MCP Server — no installation, no configuration. SUN
 **Point your client to the official endpoint:**
 
 ```bash
-claude mcp add --transport http sun-mcp-server https://mcp.sun.io/
+claude mcp add --transport http sun-mcp-server https://mcp.sun.io/mcp
 ```
 
 This gives you access to all read-only tools: token prices, pool data, positions, quoting, and more. No wallet is configured on the hosted instance, so write operations (swaps, liquidity) are not available.
@@ -62,7 +62,7 @@ This gives you access to all read-only tools: token prices, pool data, positions
 **curl example** — call the `getPrice` tool via MCP JSON-RPC:
 
 ```bash
-curl -X POST https://mcp.sun.io/ \
+curl -X POST https://mcp.sun.io/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{
@@ -156,15 +156,19 @@ Environment variables passed via `-e` are injected into the server process. Clau
 > claude mcp add sun-mcp-server -- npx -y @sun-protocol/sun-mcp-server
 > ```
 
-**Streamable HTTP** — run a persistent HTTP server, useful for sharing one endpoint across a team or deploying in Docker / Kubernetes.
+**Streamable HTTP** — run a persistent HTTP server, useful for sharing one endpoint across a team or deploying in Docker / Kubernetes. Streamable HTTP enforces Bearer token authentication by default (`MCP_AUTH_TOKEN` / `--authToken`).
 
 ```bash
-# Start the server
-sun-mcp-server --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
+# Start the server with Bearer authentication
+MCP_AUTH_TOKEN="replace-with-strong-secret" \
+  sun-mcp-server --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
 
 # Register it with your MCP client
-claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/
+claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/ \
+  --header "Authorization: Bearer replace-with-strong-secret"
 ```
+
+> For public, credential-free read-only hosting only (no wallet, no API credentials, no write tools), you may explicitly opt in with `MCP_ALLOW_UNAUTHENTICATED_HTTP=true` and `MCP_READ_ONLY=true`. Unauthenticated HTTP startup is strictly rejected whenever a wallet, outbound API credentials, or write tools are enabled.
 
 Without `--config` or `CONFIG_FILE`, the CLI checks `openapi-mcp.json`, `.openapi-mcp.json`,
 and `config.json` in the working directory, in that order, before falling back to the bundled
@@ -173,15 +177,18 @@ and `config.json` in the working directory, in that order, before falling back t
 uses `stdio`; the Docker image explicitly overrides it with `MCP_TRANSPORT=streamable-http`.
 When the configured MCP path is `/` or `/mcp`, both URLs are accepted.
 
-> For external access (e.g. from other machines or containers), bind to `0.0.0.0` instead of `127.0.0.1`.
+> For external access (e.g. from other machines or containers), bind to `0.0.0.0` instead of `127.0.0.1` and always configure `MCP_AUTH_TOKEN`.
 
-**Docker** — the production image listens on `0.0.0.0:8080` and serves MCP at both `/` and `/mcp`.
+**Docker** — the production image (pinned to Node.js `24.22.3` with November 2026 security fixes) listens on `0.0.0.0:8080` and serves MCP at both `/` and `/mcp`.
 
 ```bash
 docker build -t sun-mcp-server:local .
-docker run --rm -p 8080:8080 sun-mcp-server:local
+docker run --rm -p 8080:8080 \
+  -e MCP_AUTH_TOKEN="replace-with-strong-secret" \
+  sun-mcp-server:local
 
-claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/
+claude mcp add --transport http sun-mcp-server http://127.0.0.1:8080/ \
+  --header "Authorization: Bearer replace-with-strong-secret"
 ```
 
 The image includes the bundled OpenAPI specification and a protocol-level health check.
@@ -194,6 +201,8 @@ Tag pushes publish multi-platform images through GitHub Actions:
 
 - `test-v*` publishes the `test` image tag.
 - `v*` publishes the full Git tag, for example `v1.2.1`.
+
+The CI `build-and-push` workflow passes `MCP_DEFAULT_READ_ONLY=true` and `MCP_DEFAULT_ALLOW_UNAUTHENTICATED_HTTP=true` as Docker build arguments for the official public read-only image (local `docker build` keeps both `false` by default). Even on images built with those defaults, enabling write mode (`-e MCP_READ_ONLY=false`) or injecting wallet / outbound API credentials still requires `MCP_AUTH_TOKEN`.
 
 Configure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as repository secrets. The default
 repository is `sunprotocolhub/sun-mcp-server`; set the optional `DOCKER_IMAGE` repository variable

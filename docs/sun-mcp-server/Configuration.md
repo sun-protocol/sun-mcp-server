@@ -30,11 +30,16 @@ the selected configuration file.
 | `MCP_SERVER_PORT` | HTTP server port | `8080` |
 | `MCP_SERVER_PATH` | Primary HTTP MCP endpoint path; `/` and `/mcp` are compatible aliases | `/` |
 | `MCP_CORS_ORIGINS` | Comma-separated allowed browser origins; leave empty to deny browser origins | (disabled) |
+| `MCP_AUTH_TOKEN` | Comma-separated Bearer token(s) required for `streamable-http` requests | (required for HTTP) |
+| `MCP_ALLOW_UNAUTHENTICATED_HTTP` | Explicitly allow unauthenticated HTTP MCP **only** in credential-free read-only mode | `false` |
+| `MCP_READ_ONLY` | Force read-only mode: skip wallet initialization and omit all write/wallet tools | `false` |
 | `MCP_SHUTDOWN_TIMEOUT_MS` | Graceful shutdown deadline before forced exit | `5000` |
-| `MCP_WHITELIST_OPERATIONS` | Comma-separated list of allowed operations | (all) |
-| `MCP_BLACKLIST_OPERATIONS` | Comma-separated list of blocked operations | (none) |
+| `MCP_WHITELIST_OPERATIONS` | Comma-separated list of allowed OpenAPI and `sunswap_*` tools | (all) |
+| `MCP_BLACKLIST_OPERATIONS` | Comma-separated list of blocked OpenAPI and `sunswap_*` tools | (none) |
 | `CUSTOM_HEADERS` | Custom headers as JSON | |
 | `TARGET_API_TIMEOUT_MS` | API request timeout in ms | |
+
+Streamable HTTP enforces Bearer authentication by default (`MCP_AUTH_TOKEN` or `--authToken`) using constant-time token digests, and validates loopback `Host` headers when bound to `127.0.0.1` / `localhost` / `::1` to prevent DNS rebinding. Unauthenticated HTTP startup is permitted only when `MCP_ALLOW_UNAUTHENTICATED_HTTP=true` is explicitly set **and** no wallet, outbound API credentials, or write tools are active. When no wallet is configured or `MCP_READ_ONLY=true` is enabled, write tools are automatically omitted from `tools/list`.
 
 HTTP MCP requests are limited to 1 MiB, including chunked bodies, and batches to 100 messages. Tool arguments are limited to 10,000 array elements and object keys in total before schema validation, on both HTTP and stdio. Split larger requests into smaller calls. OpenAPI overlay merges reject `__proto__` keys in either the base document or the overlay.
 
