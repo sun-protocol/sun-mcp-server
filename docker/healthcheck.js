@@ -43,6 +43,20 @@ function isValidHealthcheckResponse(statusCode, responseBody) {
   }
 }
 
+function createHealthcheckHeaders(body, rawAuthToken = process.env.MCP_AUTH_TOKEN) {
+  const firstToken = String(rawAuthToken || '')
+    .split(',')
+    .map((item) => item.trim())
+    .find(Boolean)
+
+  return {
+    Accept: 'application/json, text/event-stream',
+    'Content-Type': 'application/json',
+    'Content-Length': Buffer.byteLength(body),
+    ...(firstToken ? { Authorization: `Bearer ${firstToken}` } : {}),
+  }
+}
+
 function runHealthcheck(exit = process.exit) {
   const body = createHealthcheckBody()
   let settled = false
@@ -59,11 +73,7 @@ function runHealthcheck(exit = process.exit) {
       path: mcpPath,
       method: 'POST',
       timeout: 4000,
-      headers: {
-        Accept: 'application/json, text/event-stream',
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body),
-      },
+      headers: createHealthcheckHeaders(body),
     },
     (response) => {
       const chunks = []
@@ -96,6 +106,7 @@ function runHealthcheck(exit = process.exit) {
 module.exports = {
   HEALTHCHECK_ID,
   createHealthcheckBody,
+  createHealthcheckHeaders,
   isValidHealthcheckResponse,
   runHealthcheck,
 }

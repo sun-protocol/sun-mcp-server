@@ -4,6 +4,7 @@ const { LATEST_PROTOCOL_VERSION } = require('@modelcontextprotocol/sdk/types.js'
 const {
   HEALTHCHECK_ID,
   createHealthcheckBody,
+  createHealthcheckHeaders,
   isValidHealthcheckResponse,
 } = require('../../docker/healthcheck.js')
 
@@ -23,6 +24,17 @@ describe('Docker healthcheck contract', () => {
       id: HEALTHCHECK_ID,
       method: 'initialize',
       params: { protocolVersion: LATEST_PROTOCOL_VERSION },
+    })
+  })
+
+  it('attaches Bearer Authorization header when MCP_AUTH_TOKEN is configured', () => {
+    const body = createHealthcheckBody()
+    expect(createHealthcheckHeaders(body, '')).not.toHaveProperty('Authorization')
+    expect(createHealthcheckHeaders(body, 'token-one')).toMatchObject({
+      Authorization: 'Bearer token-one',
+    })
+    expect(createHealthcheckHeaders(body, ' token-primary , token-secondary ')).toMatchObject({
+      Authorization: 'Bearer token-primary',
     })
   })
 

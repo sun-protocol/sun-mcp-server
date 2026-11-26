@@ -1,6 +1,7 @@
 import { createReadonlyTronWeb, type Wallet } from '@sun-protocol/sun-kit'
 import {
   resolveWalletProvider,
+  UnsupportedOperationError,
   type Wallet as BaseWallet,
   type Eip712Capable,
 } from '@bankofai/agent-wallet'
@@ -9,6 +10,10 @@ import type { TronWeb } from 'tronweb'
 export type { Wallet }
 
 let _wallet: Wallet | null = null
+
+export function resetWallet(): void {
+  _wallet = null
+}
 
 export async function initWallet(): Promise<void> {
   _wallet = null
@@ -28,7 +33,7 @@ export async function initWallet(): Promise<void> {
 export function getWallet(): Wallet {
   if (!_wallet) {
     throw new Error(
-      'No wallet configured. Set AGENT_WALLET_PRIVATE_KEY, AGENT_WALLET_MNEMONIC, AGENT_WALLET_PASSWORD for agent-wallet.',
+      'No wallet configured. Set AGENT_WALLET_PRIVATE_KEY, AGENT_WALLET_MNEMONIC, or configure wallets_config.json for agent-wallet.',
     )
   }
   return _wallet
@@ -92,12 +97,26 @@ class AgentWalletAdapter implements Wallet {
   }
 
   async signTransaction(unsignedTx: Record<string, unknown>): Promise<any> {
-    const signedJson = await this.agentWallet.signTransaction(unsignedTx)
-    return JSON.parse(signedJson)
+    const signed: unknown = await this.agentWallet.signTransaction(unsignedTx)
+    if (typeof signed === 'string') {
+      return JSON.parse(signed)
+    }
+    if (signed && typeof signed === 'object' && 'transaction' in signed) {
+      return (signed as { transaction: unknown }).transaction
+    }
+    return signed
   }
 
   async signMessage(message: string): Promise<string> {
-    return await this.agentWallet.signMessage(Buffer.from(message, 'utf-8'))
+    const legacySigner = this.agentWallet as unknown as {
+      signMessage?: (msg: Buffer) => Promise<string>
+    }
+    if (typeof legacySigner.signMessage === 'function') {
+      return await legacySigner.signMessage(Buffer.from(message, 'utf-8'))
+    }
+    throw new UnsupportedOperationError(
+      'Message signing is not supported by the active agent-wallet provider',
+    )
   }
 
   async signTypedData(

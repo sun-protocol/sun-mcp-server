@@ -21,6 +21,9 @@
   "port": 8080,
   "mcpPath": "/",
   "corsOrigins": [],
+  "authToken": "your-http-mcp-bearer-token",
+  "allowUnauthenticatedHttp": false,
+  "readOnly": false,
   "targetUrl": "https://api.example.com",
   "timeout": 30000,
   

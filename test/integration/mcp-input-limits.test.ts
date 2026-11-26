@@ -6,6 +6,7 @@ const getBalances = jest.fn(async () => ({ balances: [] }))
 
 jest.mock('../../src/wallet', () => ({
   initWallet: jest.fn(async () => undefined),
+  resetWallet: jest.fn(),
   isWalletConfigured: () => false,
   getWalletAddress: jest.fn(),
 }))
@@ -20,6 +21,9 @@ jest.mock('../../src/config', () => ({
     mcpPort: 0,
     mcpPath: '/',
     mcpCorsOrigins: [],
+    mcpAuthTokens: ['test-http-token'],
+    mcpAllowUnauthenticatedHttp: false,
+    mcpReadOnly: false,
     specConfigs: [
       {
         specPath: require('path').resolve(__dirname, '../../specs/sunio-open-api.json'),
@@ -45,10 +49,11 @@ describe('MCP HTTP tool access and input limits', () => {
   afterAll(async () => running?.close())
   beforeEach(() => getBalances.mockClear())
 
-  async function post(body: unknown) {
+  async function post(body: unknown, extraHeaders: Record<string, string> = {}) {
     const encoded = JSON.stringify(body)
     return new Promise<{
       status: number | undefined
+      headers: http.IncomingHttpHeaders
       text(): Promise<string>
       json(): Promise<any>
     }>((resolve, reject) => {
@@ -59,7 +64,9 @@ describe('MCP HTTP tool access and input limits', () => {
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json, text/event-stream',
+            Authorization: 'Bearer test-http-token',
             'Content-Length': Buffer.byteLength(encoded),
+            ...extraHeaders,
           },
         },
         (response) => {
@@ -71,6 +78,7 @@ describe('MCP HTTP tool access and input limits', () => {
           response.once('end', () =>
             resolve({
               status: response.statusCode,
+              headers: response.headers,
               text: async () => text,
               json: async () => JSON.parse(text),
             }),
@@ -139,6 +147,7 @@ describe('MCP HTTP tool access and input limits', () => {
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json, text/event-stream',
+            Authorization: 'Bearer test-http-token',
           },
         },
         (response) => {
@@ -192,7 +201,35 @@ describe('MCP HTTP tool access and input limits', () => {
     expect(JSON.parse(message.result.content[0].text)).toEqual({ balances: [] })
     expect(getBalances).toHaveBeenCalledTimes(1)
     const list = await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' })
-    const tools = (await list.json()) as { result: { tools: { name: string }[] } }
+    const tools = (await list.json()) as {
+      result: { tools: { name: string; annotations?: { readOnlyHint?: boolean } }[] }
+    }
     expect(tools.result.tools.some((tool) => tool.name === 'sunswap_get_balances')).toBe(true)
+    expect(tools.result.tools.some((tool) => tool.name === 'sunswap_swap')).toBe(false)
+    expect(tools.result.tools.some((tool) => tool.name === 'sunswap_get_wallet_address')).toBe(
+      false,
+    )
+    expect(tools.result.tools.every((tool) => tool.annotations?.readOnlyHint === true)).toBe(true)
+  })
+
+  it('rejects unauthenticated, invalid-token, and DNS-rebinding HTTP MCP requests', async () => {
+    const missingAuth = await post(
+      { jsonrpc: '2.0', id: 10, method: 'tools/list' },
+      { Authorization: '' },
+    )
+    expect(missingAuth.status).toBe(401)
+    expect(missingAuth.headers['www-authenticate']).toBe('Bearer')
+
+    const wrongAuth = await post(
+      { jsonrpc: '2.0', id: 11, method: 'tools/list' },
+      { Authorization: 'Bearer wrong-token' },
+    )
+    expect(wrongAuth.status).toBe(401)
+
+    const rebindingHost = await post(
+      { jsonrpc: '2.0', id: 12, method: 'tools/list' },
+      { Host: 'rebind.attacker.example:8080' },
+    )
+    expect(rebindingHost.status).toBe(403)
   })
 })

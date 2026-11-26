@@ -6,8 +6,9 @@
 - npm
 
 Future Node.js major versions are unsupported until added to the CI build, test, and packaged
-CLI handshake matrix. The Docker image is pinned to Node.js 24.22.1, including the October 2026
-security fixes.
+CLI handshake matrix. The Docker image is pinned to Node.js 24.22.3, including the November 2026
+security fixes, with Debian security upgrades applied and global `npm`/`corepack` removed from
+the runtime layer.
 
 ## Setup
 
@@ -30,7 +31,7 @@ When installing the npm package into another project, add these rules to that pr
 }
 ```
 
-Keep these overrides until the upstream packages accept the fixed versions. They do not resolve the remaining Zod 3 dependency in agent-wallet or the unpatched deepmerge advisory.
+Keep these overrides until the upstream packages accept the fixed versions. They do not eliminate the unpatched low-severity deepmerge advisory.
 
 ## Running
 
@@ -43,7 +44,8 @@ npm start
 ### HTTP Mode
 
 ```bash
-npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
+MCP_AUTH_TOKEN="replace-with-strong-secret" \
+  npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
 ```
 
 The packaged `sun-mcp-server` command first checks the working directory for
@@ -57,7 +59,9 @@ When `MCP_SERVER_PATH` is `/` or `/mcp`, both paths are accepted for MCP client 
 
 ```bash
 docker build -t sun-mcp-server:local .
-docker run --rm -p 8080:8080 sun-mcp-server:local
+docker run --rm -p 8080:8080 \
+  -e MCP_AUTH_TOKEN="replace-with-strong-secret" \
+  sun-mcp-server:local
 ```
 
 The image listens on `0.0.0.0:8080`, serves MCP at `/`, and includes the bundled OpenAPI
@@ -65,13 +69,17 @@ specification. Override runtime settings with environment variables when needed:
 
 ```bash
 docker run --rm -p 9090:9090 \
+  -e MCP_AUTH_TOKEN="replace-with-strong-secret" \
   -e MCP_SERVER_PORT=9090 \
   -e MCP_SERVER_PATH=/ \
   sun-mcp-server:local
 ```
 
 Git tags matching `test-v*` publish the Docker tag `test`; tags matching `v*` publish the
-full Git tag. Configure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as repository secrets.
+full Git tag. The CI `build-and-push` workflow bakes `MCP_READ_ONLY=true` and
+`MCP_ALLOW_UNAUTHENTICATED_HTTP=true` into the published public read-only image via Docker
+`build-args` (while local `docker build` keeps both `false` by default). Configure
+`DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as repository secrets.
 
 ### Development Mode
 

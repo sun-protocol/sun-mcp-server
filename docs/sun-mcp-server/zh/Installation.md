@@ -6,7 +6,7 @@
 - npm
 
 未来 Node.js 大版本在加入 CI 构建、测试及发布包 CLI 握手矩阵前均不属于支持范围。
-Docker 镜像固定使用 Node.js 24.22.1，包含 2026 年 10 月安全修复。
+Docker 镜像固定使用 Node.js 24.22.3（包含 2026 年 11 月安全修复），并在构建运行层升级系统安全补丁、剥离全局 `npm`/`corepack`。
 
 ## 安装步骤
 
@@ -29,7 +29,7 @@ npm run build
 }
 ```
 
-在上游依赖允许修复版本前保留这些覆盖。它们不解决 agent-wallet 剩余的 Zod 3 依赖，也不消除尚无上游补丁的 deepmerge 公告。
+在上游依赖允许修复版本前保留这些覆盖。它们不消除尚无上游补丁的 deepmerge 低危公告。
 
 ## 运行
 
@@ -42,7 +42,8 @@ npm start
 ### HTTP 模式
 
 ```bash
-npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
+MCP_AUTH_TOKEN="replace-with-strong-secret" \
+  npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath /
 ```
 
 通过 npm 安装的 `sun-mcp-server` 命令会依次检查当前工作目录下的
@@ -56,7 +57,9 @@ npm start -- --transport streamable-http --host 127.0.0.1 --port 8080 --mcpPath 
 
 ```bash
 docker build -t sun-mcp-server:local .
-docker run --rm -p 8080:8080 sun-mcp-server:local
+docker run --rm -p 8080:8080 \
+  -e MCP_AUTH_TOKEN="replace-with-strong-secret" \
+  sun-mcp-server:local
 ```
 
 镜像默认监听 `0.0.0.0:8080`，在根路径 `/` 提供 MCP 服务，并内置 OpenAPI 规范。
@@ -64,13 +67,16 @@ docker run --rm -p 8080:8080 sun-mcp-server:local
 
 ```bash
 docker run --rm -p 9090:9090 \
+  -e MCP_AUTH_TOKEN="replace-with-strong-secret" \
   -e MCP_SERVER_PORT=9090 \
   -e MCP_SERVER_PATH=/ \
   sun-mcp-server:local
 ```
 
 推送 `test-v*` Git Tag 时发布 Docker `test` 标签；推送 `v*` Tag 时发布完整 Git
-标签。仓库需配置 `DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN` Secrets。
+标签。CI 的 `build-and-push` 任务通过 Docker `build-args` 为公开只读发布镜像预设
+`MCP_READ_ONLY=true` 与 `MCP_ALLOW_UNAUTHENTICATED_HTTP=true`（本地 `docker build` 默认仍为
+`false`）。仓库需配置 `DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN` Secrets。
 
 ### 开发模式
 
